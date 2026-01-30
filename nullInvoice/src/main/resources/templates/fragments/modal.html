@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="modal">
+    <div id="appModal" class="modal-overlay hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div class="modal-surface bg-zinc-900 border border-zinc-700 rounded-xl p-6 max-w-md mx-4">
+            <div class="text-center mb-4">
+                <i id="appModalIcon" class="fa-solid fa-circle-info text-4xl text-sky-400 mb-3"></i>
+                <h3 id="appModalTitle" class="text-xl font-bold text-sky-400">Modal</h3>
+            </div>
+            <p id="appModalMessage" class="text-zinc-300 mb-6 text-center"></p>
+            <div id="appModalActions" class="flex justify-center gap-4">
+                <form id="appModalForm" method="post" class="hidden">
+                    <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button id="appModalPrimarySubmit" type="submit" class="px-6 py-2.5 rounded-lg font-semibold transition-colors"></button>
+                </form>
+                <a id="appModalPrimaryLink" class="hidden px-6 py-2.5 rounded-lg font-semibold transition-colors"></a>
+                <button id="appModalPrimaryButton" type="button" class="hidden px-6 py-2.5 rounded-lg font-semibold transition-colors"></button>
+                <a id="appModalSecondaryLink" class="hidden px-6 py-2.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors"></a>
+                <button id="appModalSecondaryButton" type="button" class="px-6 py-2.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors"></button>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

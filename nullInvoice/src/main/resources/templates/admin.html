@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(#{admin.title})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
+        <div th:replace="~{fragments/nav :: navbar}"></div>
+        <div th:replace="~{fragments/nav :: mobileNav}"></div>
+
+        <main class="max-w-7xl mx-auto px-6 py-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold mb-2" th:text="#{admin.heading}">Admin Dashboard</h1>
+                <p class="text-zinc-400" th:text="#{admin.subtitle}">Manage your account and API keys</p>
+            </div>
+
+            <!-- Change Password Section -->
+            <div class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fa-solid fa-key mr-2 text-zinc-400"></i>
+                    <span th:text="#{admin.changePassword.heading}">Change Password</span>
+                </h2>
+
+                <!-- Password Success Message -->
+                <div th:if="${passwordSuccess}" class="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/50 rounded-lg text-emerald-400">
+                    <i class="fa-solid fa-check-circle mr-2"></i>
+                    <span th:text="${passwordSuccess}">Success message</span>
+                </div>
+
+                <!-- Password Error Message -->
+                <div th:if="${passwordError}" class="mb-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
+                    <i class="fa-solid fa-exclamation-circle mr-2"></i>
+                    <span th:text="${passwordError}">Error message</span>
+                </div>
+
+                <form th:action="@{/admin/change-password}" method="post" th:object="${passwordChangeForm}">
+                    <!-- Current Password -->
+                    <div class="mb-4">
+                        <label for="currentPassword" class="block text-sm font-medium mb-2" th:text="#{admin.changePassword.current}">Current Password</label>
+                        <input type="password"
+                               id="currentPassword"
+                               th:field="*{currentPassword}"
+                               class="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-emerald-500 transition-colors"
+                               required>
+                        <p th:if="${#fields.hasErrors('currentPassword')}" th:errors="*{currentPassword}" class="text-red-400 text-sm mt-1"></p>
+                    </div>
+
+                    <!-- New Password -->
+                    <div class="mb-4">
+                        <label for="newPassword" class="block text-sm font-medium mb-2" th:text="#{admin.changePassword.new}">New Password</label>
+                        <input type="password"
+                               id="newPassword"
+                               th:field="*{newPassword}"
+                               class="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-emerald-500 transition-colors"
+                               required>
+                        <p th:if="${#fields.hasErrors('newPassword')}" th:errors="*{newPassword}" class="text-red-400 text-sm mt-1"></p>
+                    </div>
+
+                    <!-- Repeat New Password -->
+                    <div class="mb-4">
+                        <label for="newPasswordRepeat" class="block text-sm font-medium mb-2" th:text="#{admin.changePassword.repeat}">Repeat New Password</label>
+                        <input type="password"
+                               id="newPasswordRepeat"
+                               th:field="*{newPasswordRepeat}"
+                               class="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-emerald-500 transition-colors"
+                               required>
+                    </div>
+
+                    <!-- Password Hint -->
+                    <div class="mb-4">
+                        <label for="passwordHint" class="block text-sm font-medium mb-2" th:text="#{admin.changePassword.hint}">Password Hint (Optional)</label>
+                        <input type="text"
+                               id="passwordHint"
+                               th:field="*{passwordHint}"
+                               class="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-emerald-500 transition-colors">
+                    </div>
+
+                    <button type="submit"
+                            class="btn-primary px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                        <i class="fa-solid fa-check mr-2"></i>
+                        <span th:text="#{admin.changePassword.submit}">Change Password</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- API Keys Section -->
+            <div class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fa-solid fa-code mr-2 text-zinc-400"></i>
+                    <span th:text="#{admin.apiKeys.heading}">API Keys</span>
+                </h2>
+
+                <!-- API Key Success Message (non-generation) -->
+                <div th:if="${apiKeySuccess != null and generatedApiKey == null}" class="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/50 rounded-lg text-emerald-400">
+                    <i class="fa-solid fa-check-circle mr-2"></i>
+                    <span th:text="${apiKeySuccess}">Success message</span>
+                </div>
+
+                <!-- API Key Error Message -->
+                <div th:if="${apiKeyError}" class="mb-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
+                    <i class="fa-solid fa-exclamation-circle mr-2"></i>
+                    <span th:text="${apiKeyError}">Error message</span>
+                </div>
+
+                <!-- Generate New API Key Form -->
+                <form th:action="@{/admin/api-keys/generate}" method="post" class="mb-6">
+                    <div class="flex gap-2">
+                        <input type="text"
+                               name="description"
+                               placeholder="Description (optional)"
+                               th:placeholder="#{admin.apiKeys.generate.placeholder}"
+                               class="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-emerald-500 transition-colors">
+                        <button type="submit"
+                                class="btn-primary px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors whitespace-nowrap">
+                            <i class="fa-solid fa-plus mr-2"></i>
+                            <span th:text="#{admin.apiKeys.generate.submit}">Generate Key</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- API Keys List -->
+                <div th:if="${apiKeys != null and !apiKeys.isEmpty()}">
+                    <h3 class="text-sm font-semibold text-zinc-400 mb-3" th:text="#{admin.apiKeys.list.heading}">Existing API Keys</h3>
+                    <div class="space-y-2">
+                        <div th:each="key : ${apiKeys}"
+                             th:classappend="${!key.enabled} ? 'opacity-50' : ''"
+                             class="config-item flex items-center justify-between p-4 bg-zinc-800 border border-zinc-700 rounded-lg">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <code class="text-sm font-mono text-emerald-400" th:text="'...' + ${key.keySuffix}">...a3f7</code>
+                                    <span th:if="${!key.enabled}" class="px-2 py-0.5 bg-red-500/20 text-red-400 text-xs rounded" th:text="#{admin.apiKeys.list.revoked}">Revoked</span>
+                                </div>
+                                <p th:if="${key.description}" class="text-sm text-zinc-400" th:text="${key.description}">Description</p>
+                                <p class="text-xs text-zinc-500 mt-1">
+                                    <span th:text="#{admin.apiKeys.list.created}">Created:</span>
+                                    <span th:text="${#temporals.format(key.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</span>
+                                    <span th:if="${key.lastUsedAt}">
+                                        | <span th:text="#{admin.apiKeys.list.lastUsed}">Last used:</span>
+                                        <span th:text="${#temporals.format(key.lastUsedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</span>
+                                    </span>
+                                </p>
+                            </div>
+                            <button th:if="${key.enabled}"
+                                    type="button"
+                                    th:data-key-id="${key.id}"
+                                    onclick="confirmRevoke(this)"
+                                    class="px-3 py-1.5 text-sm rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">
+                                <i class="fa-solid fa-ban mr-1"></i>
+                                <span th:text="#{admin.apiKeys.list.revoke}">Revoke</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${apiKeys == null or apiKeys.isEmpty()}" class="text-center py-8 text-zinc-500">
+                    <i class="fa-solid fa-key text-4xl mb-2 opacity-50"></i>
+                    <p th:text="#{admin.apiKeys.list.empty}">No API keys yet. Generate one to get started.</p>
+                </div>
+            </div>
+        </main>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+        <div th:replace="~{fragments/modal :: modal}"></div>
+
+        <script src="/js/theme.js"></script>
+        <script src="/js/modal.js"></script>
+        <script src="/js/admin.js"></script>
+        <script th:inline="javascript">
+            // initialize admin page with i18n messages
+            AdminPage.init({
+                modalGeneratedTitle: /*[[#{admin.apiKeys.modal.generated.title}]]*/ 'API Key Generated',
+                modalGeneratedConfirm: /*[[#{admin.apiKeys.modal.generated.confirm}]]*/ "I've Copied It",
+                modalGeneratedWarning: /*[[#{admin.apiKeys.generated.warning}]]*/ "Copy this API key now - it won't be shown again!",
+                modalGeneratedUsage: /*[[#{admin.apiKeys.generated.usage}]]*/ 'Use this key in the Authorization header: Bearer {key} of your API requests',
+                modalRevokeTitle: /*[[#{admin.apiKeys.modal.revoke.title}]]*/ 'Revoke API Key',
+                modalRevokeMessage: /*[[#{admin.apiKeys.modal.revoke.message}]]*/ 'Are you sure you want to revoke this API key? This action cannot be undone.',
+                modalRevokeConfirm: /*[[#{admin.apiKeys.modal.revoke.confirm}]]*/ 'Yes, Revoke',
+                modalCancel: /*[[#{admin.apiKeys.modal.cancel}]]*/ 'Cancel'
+            });
+
+            // show API key in modal on page load if present
+            document.addEventListener('DOMContentLoaded', function() {
+                /*[# th:if="${generatedApiKey != null}"]*/
+                var apiKey = /*[[${generatedApiKey}]]*/ null;
+                if (apiKey) {
+                    //console.log('Generated API key detected, showing modal');
+                    showApiKeyModal(apiKey);
+                }
+                /*[/]*/
+            });
+        </script>
+    </body>
+</html>

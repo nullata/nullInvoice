@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(#{invoice_new.title})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
+        <div th:replace="~{fragments/nav :: navbar}"></div>
+        <div th:replace="~{fragments/nav :: mobileNav}"></div>
+
+        <main class="max-w-6xl mx-auto px-6 py-8">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold" th:text="#{invoice_new.heading}">New Invoice</h1>
+                    <p class="text-zinc-400" th:text="#{invoice_new.subtitle}">Generate a new invoice</p>
+                </div>
+            </div>
+
+            <div th:if="${supplierMissing}" class="mb-6 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-200">
+                <i class="fa-solid fa-exclamation-triangle mr-2"></i>
+                <span th:text="#{invoice_new.supplier_missing.prefix}">Supplier profile is missing.</span>
+                <a href="/suppliers/new" class="underline hover:text-amber-100" th:text="#{invoice_new.supplier_missing.link}">Configure one</a>
+                <span th:text="#{invoice_new.supplier_missing.suffix}">before generating invoices.</span>
+            </div>
+
+            <div id="supplier-data" class="hidden"
+                 th:attr="data-supplier-id=${supplier != null ? supplier.id : ''},
+                 data-default-tax-rate=${defaultTaxRate != null ? defaultTaxRate : ''},
+                 data-has-supplier=${supplier != null}">
+            </div>
+            <div id="invoiceFormCopy" class="hidden"
+                 th:attr="data-modal-title-success=#{invoice_new.modal.success},
+                 data-modal-title-error=#{invoice_new.modal.error},
+                 data-generate-label=#{invoice_new.actions.generate},
+                 data-generating-label=#{invoice_new.actions.generating},
+                 data-error-supplier-missing=#{invoice_new.error.supplier_missing},
+                 data-error-client-required=#{invoice_new.error.client_required},
+                 data-error-items-required=#{invoice_new.error.items_required},
+                  data-error-item-fields-required=#{invoice_new.error.item_fields_required},
+                  data-error-generate-failed=#{invoice_new.error.generate_failed},
+                  data-error-number-missing=#{invoice_new.error.number_missing},
+                  data-client-no-results=#{invoice_new.client.search.no_results},
+                  data-client-loaded-template=#{invoice_new.client.search.loaded},
+                  data-close-label=#{invoice_new.modal.close}">
+    </div>
+
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <!-- Supplier Panel -->
+                <div class="card rounded-xl border border-zinc-800 bg-zinc-900 p-6 lg:col-span-1">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold" th:text="#{invoice_new.supplier.heading}">Supplier</h2>
+                        <a th:if="${supplier != null}" th:href="@{'/suppliers/' + ${supplier.id}}" class="text-sm text-zinc-400 hover:text-white">
+                            <i class="fa-solid fa-pen"></i>
+                            <span th:text="#{invoice_new.supplier.edit}">Edit</span>
+                        </a>
+                    </div>
+                    <div th:if="${supplier != null}" class="space-y-2 text-sm text-zinc-300">
+                        <p class="font-semibold text-zinc-100" th:text="${supplier.name}">Supplier Name</p>
+                        <p th:if="${supplier.taxId}">
+                            <span class="text-zinc-500" th:text="#{invoice_new.supplier.tax_id}">Tax ID</span>: <span th:text="${supplier.taxId}"></span>
+                        </p>
+                        <p th:if="${supplier.vatId}">
+                            <span class="text-zinc-500" th:text="#{invoice_new.supplier.vat_id}">VAT ID</span>: <span th:text="${supplier.vatId}"></span>
+                        </p>
+                        <div class="pt-2 text-zinc-400 text-xs">
+                            <p th:text="${supplier.addressLine1}"></p>
+                            <p th:if="${supplier.addressLine2}" th:text="${supplier.addressLine2}"></p>
+                            <p><span th:text="${supplier.city}"></span><span th:if="${supplier.postalCode}">, <span th:text="${supplier.postalCode}"></span></span></p>
+                            <p th:text="${supplier.country}"></p>
+                        </div>
+                    </div>
+                    <div th:if="${supplier == null}" class="text-sm text-zinc-400">
+                        <i class="fa-solid fa-building text-2xl mb-2 block text-zinc-600"></i>
+                        <p th:text="#{invoice_new.supplier.empty}">No supplier configured yet.</p>
+                        <a href="/suppliers/new" class="text-emerald-400 hover:underline block mt-2" th:text="#{invoice_new.supplier.add}">Add one now</a>
+                    </div>
+                </div>
+
+                <!-- Invoice Form -->
+                <div class="card rounded-xl border border-zinc-800 bg-zinc-900 p-6 lg:col-span-2">
+                    <h2 class="text-lg font-semibold mb-4" th:text="#{invoice_new.details.heading}">Invoice Details</h2>
+
+                    <!-- Dates and Currency -->
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-3 mb-6">
+                        <div>
+                            <label class="text-sm text-zinc-300" th:text="#{invoice_new.details.issue_date}">Issue date</label>
+                            <input id="issueDate" type="date" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                        </div>
+                        <div>
+                            <label class="text-sm text-zinc-300" th:text="#{invoice_new.details.due_date}">Due date</label>
+                            <input id="dueDate" type="date" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                        </div>
+                        <div>
+                            <label class="text-sm text-zinc-300" th:text="#{invoice_new.details.currency}">Currency (optional)</label>
+                            <input id="currencyCode" type="text" th:placeholder="#{invoice_new.details.currency.placeholder}" placeholder="EUR"
+                                   class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <input id="markUnpaid" type="checkbox"
+                               class="h-4 w-4 rounded border border-zinc-700 bg-zinc-950 text-emerald-500 disabled:opacity-50">
+                        <label for="markUnpaid" class="text-sm text-zinc-300" th:text="#{invoice_new.details.unpaid_label}">Mark as unpaid</label>
+                        <span class="text-xs text-zinc-500" th:text="#{invoice_new.details.unpaid_hint}">Requires a due date</span>
+                    </div>
+
+                    <!-- Client Section -->
+                    <div class="border-t border-zinc-800 pt-6 mb-6">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+                            <h3 class="text-base font-semibold" th:text="#{invoice_new.client.heading}">Client</h3>
+                            <div class="relative flex-1 max-w-md">
+                                <input id="clientSearch" type="text" th:placeholder="#{invoice_new.client.search.placeholder}" placeholder="Search clients by name, tax ID, or VAT ID..."
+                                       class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm pl-10">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"></i>
+                                <div id="clientSearchResults" class="hidden absolute z-10 mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl max-h-60 overflow-auto"></div>
+                            </div>
+                        </div>
+
+                        <div id="clientSearchMsg" class="text-sm text-zinc-400 mb-3"></div>
+
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <label class="text-sm text-zinc-300">
+                                    <span th:text="#{invoice_new.client.name}">Name</span>
+                                    <span class="text-rose-400">*</span>
+                                </label>
+                                <input id="clientName" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5" required>
+                            </div>
+                            <div>
+                                <label class="text-sm text-zinc-300">
+                                    <span th:text="#{invoice_new.client.country}">Country</span>
+                                    <span class="text-rose-400">*</span>
+                                </label>
+                                <input id="clientCountry" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5" required>
+                            </div>
+                            <div>
+                                <label class="text-sm text-zinc-300" th:text="#{invoice_new.client.tax_id}">Tax ID</label>
+                                <input id="clientTaxId" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            </div>
+                            <div>
+                                <label class="text-sm text-zinc-300" th:text="#{invoice_new.client.vat_id}">VAT ID</label>
+                                <input id="clientVatId" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="text-sm text-zinc-300">
+                                    <span th:text="#{invoice_new.client.address1}">Address line 1</span>
+                                    <span class="text-rose-400">*</span>
+                                </label>
+                                <input id="clientAddress1" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5" required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="text-sm text-zinc-300" th:text="#{invoice_new.client.address2}">Address line 2</label>
+                                <input id="clientAddress2" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            </div>
+                            <div>
+                                <label class="text-sm text-zinc-300">
+                                    <span th:text="#{invoice_new.client.city}">City</span>
+                                    <span class="text-rose-400">*</span>
+                                </label>
+                                <input id="clientCity" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5" required>
+                            </div>
+                            <div>
+                                <label class="text-sm text-zinc-300" th:text="#{invoice_new.client.region}">Region</label>
+                                <input id="clientRegion" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            </div>
+                            <div>
+                                <label class="text-sm text-zinc-300" th:text="#{invoice_new.client.postal}">Postal code</label>
+                                <input id="clientPostal" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            </div>
+                            <div>
+                                <label class="text-sm text-zinc-300" th:text="#{invoice_new.client.email}">Email</label>
+                                <input id="clientEmail" type="email" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            </div>
+                            <div>
+                                <label class="text-sm text-zinc-300" th:text="#{invoice_new.client.phone}">Phone</label>
+                                <input id="clientPhone" type="text" class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Line Items -->
+                    <div class="border-t border-zinc-800 pt-6 mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-semibold" th:text="#{invoice_new.items.heading}">Line Items</h3>
+                            <button id="addItemBtn" type="button" class="rounded-lg border border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-800 transition-colors">
+                                <i class="fa-solid fa-plus"></i>
+                                <span th:text="#{invoice_new.items.add}">Add item</span>
+                            </button>
+                        </div>
+                        <div class="space-y-3" id="itemsContainer"></div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="border-t border-zinc-800 pt-6 mb-6">
+                        <label class="text-sm text-zinc-300" th:text="#{invoice_new.notes.label}">Notes (optional)</label>
+                        <textarea id="notes" rows="3" th:placeholder="#{invoice_new.notes.placeholder}" placeholder="Additional notes to include on the invoice..."
+                                  class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5 resize-y"></textarea>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <button id="generateBtn" type="button" class="btn-primary rounded-lg bg-emerald-500 px-6 py-3 font-semibold text-zinc-900 hover:bg-emerald-400 transition-colors">
+                            <i class="fa-solid fa-file-invoice mr-2"></i>
+                            <span th:text="#{invoice_new.actions.generate}">Generate Invoice</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <template id="item-template">
+            <div class="item-row rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-6">
+                    <div class="md:col-span-2">
+                        <label class="text-sm text-zinc-300" th:text="#{invoice_new.items.description}">Description</label>
+                        <input type="text" class="item-desc input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label class="text-sm text-zinc-300" th:text="#{invoice_new.items.quantity}">Quantity</label>
+                        <input type="number" step="0.001" class="item-qty input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label class="text-sm text-zinc-300" th:text="#{invoice_new.items.unit_price}">Unit price</label>
+                        <input type="number" step="0.01" class="item-price input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2" required>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between gap-2">
+                            <label class="text-sm text-zinc-300" th:text="#{invoice_new.items.discount}">Discount</label>
+                            <div class="relative">
+                                <button type="button"
+                                        class="discount-helper inline-flex h-6 w-6 items-center justify-center rounded-full border border-zinc-700 text-xs text-zinc-300 hover:border-emerald-400 hover:text-emerald-300"
+                                        th:attr="title=#{invoice_new.items.discount_popup.button}, aria-label=#{invoice_new.items.discount_popup.button}"
+                                        aria-expanded="false">
+                                    <i class="fa-solid fa-percent"></i>
+                                </button>
+                                <div class="discount-popover hidden absolute right-0 z-20 mt-2 w-64 rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-xs shadow-xl">
+                                    <div class="text-xs font-semibold text-zinc-200" th:text="#{invoice_new.items.discount_popup.title}">Discount from %</div>
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <input type="number" step="0.01" min="0" class="discount-percent input-field w-24 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1" placeholder="10">
+                                        <span class="text-zinc-400">%</span>
+                                        <button type="button" class="discount-apply rounded-md border border-zinc-700 px-2 py-1 text-zinc-200 hover:border-emerald-400 hover:text-emerald-300">
+                                            <span th:text="#{invoice_new.items.discount_popup.apply}">Apply</span>
+                                        </button>
+                                    </div>
+                                    <p class="discount-message mt-2 text-zinc-500"
+                                       th:attr="data-hint=#{invoice_new.items.discount_popup.hint},
+                                       data-missing=#{invoice_new.items.discount_popup.missing},
+                                       data-invalid=#{invoice_new.items.discount_popup.invalid},
+                                       data-result-template=#{invoice_new.items.discount_popup.result}">
+                                        <span th:text="#{invoice_new.items.discount_popup.hint}">Enter a percent to calculate the discount amount.</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="number" step="0.01" min="0" class="item-discount input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="text-sm text-zinc-300" th:text="#{invoice_new.items.tax_rate}">Tax rate</label>
+                        <input type="number" step="0.01" class="item-tax input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2" placeholder="0.20" required>
+                    </div>
+                </div>
+                <div class="mt-3 flex justify-end">
+                    <button type="button" class="remove-item text-sm text-rose-400 hover:text-rose-300">
+                        <i class="fa-solid fa-trash"></i>
+                        <span th:text="#{invoice_new.items.remove}">Remove</span>
+                    </button>
+                </div>
+            </div>
+        </template>
+
+  <div id="templatesMissingConfig" class="hidden"
+       th:if="${templatesMissing}"
+       th:attr="data-title=#{invoice_new.templates_missing.title}, data-message=#{invoice_new.templates_missing.body}, data-primary-label=#{invoice_new.templates_missing.go}, data-primary-href='/templates', data-secondary-label=#{invoice_new.templates_missing.cancel}, data-secondary-href='/'">
+  </div>
+  <div id="defaultTemplateMissingConfig" class="hidden"
+       th:if="${!templatesMissing and defaultTemplateMissing}"
+       th:attr="data-title=#{invoice_new.default_template_missing.title}, data-message=#{invoice_new.default_template_missing.body}, data-primary-label=#{invoice_new.templates_missing.go}, data-primary-href='/templates', data-secondary-label=#{invoice_new.templates_missing.cancel}, data-secondary-href='/'">
+  </div>
+
+  <div th:replace="~{fragments/modal :: modal}"></div>
+
+  <script src="/js/modal.js"></script>
+  <script src="/js/theme.js"></script>
+  <script src="/js/invoice-form.js"></script>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

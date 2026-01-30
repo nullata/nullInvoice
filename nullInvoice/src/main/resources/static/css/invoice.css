@@ -1,0 +1,46 @@
+body {
+    font-family: Arial, sans-serif;
+    color: #1f2933;
+    margin: 40px;
+}
+h1 {
+    margin-bottom: 8px;
+}
+.meta {
+    margin-bottom: 24px;
+}
+.grid {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+.panel {
+    width: 48%;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 8px 4px;
+    text-align: left;
+}
+th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #52606d;
+}
+.totals {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+}
+.totals table {
+    width: 40%;
+}
+.notes {
+    margin-top: 24px;
+    white-space: pre-wrap;
+}

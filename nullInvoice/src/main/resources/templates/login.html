@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(#{login.title})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen">
+        <!-- Simple navigation bar -->
+        <nav class="nav-bar border-b border-zinc-700 bg-zinc-900/80 backdrop-blur sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3 text-xl font-bold">
+                        <img src="/images/logo.svg" alt="nullInvoice" class="h-[30px] w-auto">
+                        <span>nullInvoice</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <!-- Language Selector -->
+                        <details class="relative">
+                            <summary
+                                class="lang-selector-btn list-none cursor-pointer rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                <i class="fa-solid fa-globe mr-2 text-emerald-400"></i>
+                                <span th:text="${#strings.toUpperCase(#locale.language)}">EN</span>
+                                <i class="fa-solid fa-chevron-down ml-2 text-[10px] text-zinc-400"></i>
+                            </summary>
+                            <div
+                                class="lang-selector-menu absolute right-0 mt-2 w-48 rounded-lg border border-zinc-700 bg-zinc-900 shadow-lg z-10">
+                                <a th:each="loc : ${supportedLocales}" th:href="@{/login(lang=${loc.code})}"
+                                   th:classappend="${#locale.toLanguageTag() == loc.code} ? ' bg-emerald-500/10 text-emerald-300' : ' text-zinc-300 hover:bg-zinc-800'"
+                                   class="lang-selector-option block px-4 py-2 text-sm transition-colors"
+                                   th:text="${loc.label}">English</a>
+                            </div>
+                        </details>
+                        <!-- Theme Toggle -->
+                        <button id="themeToggle" type="button" class="p-2 rounded-lg hover:bg-zinc-800 transition-colors"
+                                th:title="#{nav.theme_toggle}" title="Toggle theme">
+                            <i class="fa-solid fa-moon text-lg" id="darkIcon"></i>
+                            <i class="fa-solid fa-sun text-lg hidden" id="lightIcon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="min-h-[calc(100vh-73px)] flex items-center justify-center px-4 py-12">
+            <div class="w-full max-w-md">
+                <!-- Logo/Brand -->
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold mb-2">nullInvoice</h1>
+                    <p class="text-zinc-400 text-sm" th:text="#{login.subtitle}">Sign in to your account</p>
+                </div>
+
+                <!-- Login Card -->
+                <div class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6 sm:p-8 shadow-xl">
+                    <h2 class="text-xl font-semibold mb-6" th:text="#{login.heading}">Login</h2>
+
+                    <!-- Success Message -->
+                    <div th:if="${successMessage}" class="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/50 rounded-lg text-emerald-400 text-sm">
+                        <i class="fa-solid fa-check-circle mr-2"></i>
+                        <span th:text="${successMessage}">Success message</span>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div th:if="${errorMessage}" class="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                        <i class="fa-solid fa-exclamation-circle mr-2"></i>
+                        <span th:text="${errorMessage}">Error message</span>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form th:action="@{/login}" method="post">
+                        <!-- Username -->
+                        <div class="mb-4">
+                            <label for="username" class="block text-sm font-medium mb-2" th:text="#{login.username}">Username</label>
+                            <input type="text"
+                                   id="username"
+                                   name="username"
+                                   class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
+                                   required
+                                   autofocus>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="password" class="block text-sm font-medium" th:text="#{login.password}">Password</label>
+                                <div class="relative">
+                                    <button type="button" id="hintButton"
+                                            class="text-zinc-400 hover:text-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            th:title="#{login.hint.label}"
+                                            title="Password hint"
+                                            disabled>
+                                        <i class="fa-solid fa-circle-info text-sm"></i>
+                                    </button>
+                                    <div id="hintTooltip"
+                                         class="hint-tooltip hidden absolute right-0 mt-2 w-64 p-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg z-10 text-sm">
+                                        <div id="hintContent" class="text-zinc-300" th:text="#{login.hint.loading}">Loading hint...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="password"
+                                   id="password"
+                                   name="password"
+                                   class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
+                                   required>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit"
+                                class="btn-primary w-full px-4 py-2.5 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors text-sm">
+                            <i class="fa-solid fa-sign-in-alt mr-2"></i>
+                            <span th:text="#{login.submit}">Sign In</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Footer Info -->
+                <div class="text-center mt-4 text-zinc-500 text-xs">
+                    <p th:text="#{login.footer}">nullInvoice - Invoice management</p>
+                </div>
+            </div>
+        </main>
+        
+        <div th:replace="~{fragments/footer :: footer}"></div>
+
+        <!-- Theme Toggle Script -->
+        <script src="/js/theme.js"></script>
+        <script src="/js/login.js"></script>
+        <script th:inline="javascript">
+            // Initialize login page with i18n messages
+            LoginPage.init({
+                loading: /*[[#{login.hint.loading}]]*/ 'Loading hint...',
+                none: /*[[#{login.hint.none}]]*/ 'No password hint available'
+            });
+        </script>
+    </body>
+</html>

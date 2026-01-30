@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <nav th:fragment="navbar" class="nav-bar border-b border-zinc-700 bg-zinc-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-6">
+                    <a href="/" class="flex items-center gap-3 text-xl font-bold hover:text-emerald-400 transition-colors">
+                        <img src="/images/logo.svg" alt="NickScripts" class="h-[30px] w-auto">
+                        <span>nullInvoice</span>
+                    </a>
+                    <div class="hidden md:flex items-center gap-4">
+                        <a href="/invoices" class="nav-link text-sm hover:text-emerald-400 transition-colors">
+                            <i class="fa-solid fa-file-invoice mr-1"></i>
+                            <span th:text="#{nav.invoices}">Invoices</span>
+                        </a>
+                        <a href="/suppliers" class="nav-link text-sm hover:text-emerald-400 transition-colors">
+                            <i class="fa-solid fa-building mr-1"></i>
+                            <span th:text="#{nav.suppliers}">Suppliers</span>
+                        </a>
+                        <a href="/clients" class="nav-link text-sm hover:text-emerald-400 transition-colors">
+                            <i class="fa-solid fa-users mr-1"></i>
+                            <span th:text="#{nav.clients}">Clients</span>
+                        </a>
+                        <a href="/templates" class="nav-link text-sm hover:text-emerald-400 transition-colors">
+                            <i class="fa-solid fa-palette mr-1"></i>
+                            <span th:text="#{nav.templates}">Templates</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div th:if="${currentSupplier}"
+                         class="supplier-badge hidden sm:flex items-center gap-2 text-sm text-zinc-400 border border-zinc-700 rounded-lg px-3 py-1.5">
+                        <i class="fa-solid fa-building text-emerald-500"></i>
+                        <span th:text="${currentSupplier.name}" class="max-w-32 truncate">Supplier Name</span>
+                    </div>
+                    <details class="relative hidden sm:block">
+                        <summary
+                            class="lang-selector-btn list-none cursor-pointer rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors">
+                            <i class="fa-solid fa-globe mr-2 text-emerald-400"></i>
+                            <span th:text="${#strings.toUpperCase(#locale.language)}">EN</span>
+                            <i class="fa-solid fa-chevron-down ml-2 text-[10px] text-zinc-400"></i>
+                        </summary>
+                        <div
+                            class="lang-selector-menu absolute right-0 mt-2 w-48 rounded-lg border border-zinc-700 bg-zinc-900 shadow-lg">
+                            <a th:each="loc : ${supportedLocales}" th:href="@{''(lang=${loc.code}, supplierId=${param.supplierId != null ? param.supplierId[0] : null})}"
+                               th:classappend="${#locale.toLanguageTag() == loc.code} ? ' bg-emerald-500/10 text-emerald-300' : ' text-zinc-300 hover:bg-zinc-800'"
+                               class="lang-selector-option block px-4 py-2 text-sm transition-colors"
+                               th:text="${loc.label}">English</a>
+                        </div>
+                    </details>
+                    <a href="/invoices/new"
+                       class="btn-primary rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-emerald-400 transition-colors">
+                        <i class="fa-solid fa-plus mr-1"></i>
+                        <span th:text="#{nav.new_invoice}">New Invoice</span>
+                    </a>
+                    <!-- User dropdown -->
+                    <details class="relative hidden sm:block" sec:authorize="isAuthenticated()">
+                        <summary
+                            class="lang-selector-btn list-none cursor-pointer rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors">
+                            <i class="fa-solid fa-user mr-2 text-emerald-400"></i>
+                            <span sec:authentication="name">Admin</span>
+                            <i class="fa-solid fa-chevron-down ml-2 text-[10px] text-zinc-400"></i>
+                        </summary>
+                        <div
+                            class="lang-selector-menu absolute right-0 mt-2 w-48 rounded-lg border border-zinc-700 bg-zinc-900 shadow-lg">
+                            <a href="/admin"
+                               class="lang-selector-option block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                <i class="fa-solid fa-cog mr-2 text-zinc-400"></i>
+                                <span th:text="#{nav.admin}">Admin</span>
+                            </a>
+                            <a href="/swagger"
+                               class="lang-selector-option block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                <i class="fa-solid fa-book mr-2 text-zinc-400"></i>
+                                <span th:text="#{nav.api_docs}">API Docs</span>
+                            </a>
+                            <form th:action="@{/logout}" method="post" class="border-t border-zinc-700">
+                                <button type="submit"
+                                        class="lang-selector-option w-full text-left px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                    <i class="fa-solid fa-sign-out-alt mr-2 text-zinc-400"></i>
+                                    <span th:text="#{nav.logout}">Logout</span>
+                                </button>
+                            </form>
+                        </div>
+                    </details>
+                    <button id="themeToggle" type="button" class="p-2 rounded-lg hover:bg-zinc-800 transition-colors"
+                            th:title="#{nav.theme_toggle}" title="Toggle theme">
+                        <i class="fa-solid fa-moon text-lg" id="darkIcon"></i>
+                        <i class="fa-solid fa-sun text-lg hidden" id="lightIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile menu for small screens -->
+    <div th:fragment="mobileNav" class="mobile-nav md:hidden border-b border-zinc-700 bg-zinc-900/95 px-6 py-3">
+        <div class="flex items-center justify-around">
+            <a href="/invoices" class="nav-link text-xs flex flex-col items-center gap-1">
+                <i class="fa-solid fa-file-invoice"></i>
+                <span th:text="#{nav.invoices}">Invoices</span>
+            </a>
+            <a href="/suppliers" class="nav-link text-xs flex flex-col items-center gap-1">
+                <i class="fa-solid fa-building"></i>
+                <span th:text="#{nav.suppliers}">Suppliers</span>
+            </a>
+            <a href="/clients" class="nav-link text-xs flex flex-col items-center gap-1">
+                <i class="fa-solid fa-users"></i>
+                <span th:text="#{nav.clients}">Clients</span>
+            </a>
+            <a href="/templates" class="nav-link text-xs flex flex-col items-center gap-1">
+                <i class="fa-solid fa-palette"></i>
+                <span th:text="#{nav.templates}">Templates</span>
+            </a>
+            <a href="/admin" class="nav-link text-xs flex flex-col items-center gap-1" sec:authorize="isAuthenticated()">
+                <i class="fa-solid fa-user"></i>
+                <span th:text="#{nav.admin}">Admin</span>
+            </a>
+        </div>
+        <details class="mt-3 w-full">
+            <summary
+                class="lang-selector-btn list-none cursor-pointer rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors">
+                <i class="fa-solid fa-globe mr-2 text-emerald-400"></i>
+                <span th:text="${#strings.toUpperCase(#locale.language)}">EN</span>
+                <i class="fa-solid fa-chevron-down ml-2 text-[10px] text-zinc-400"></i>
+            </summary>
+            <div class="lang-selector-menu mt-2 rounded-lg border border-zinc-700 bg-zinc-900 shadow-lg">
+                <a th:each="loc : ${supportedLocales}" th:href="@{''(lang=${loc.code}, supplierId=${param.supplierId != null ? param.supplierId[0] : null})}"
+                   th:classappend="${#locale.toLanguageTag() == loc.code} ? ' bg-emerald-500/10 text-emerald-300' : ' text-zinc-300 hover:bg-zinc-800'"
+                   class="lang-selector-option block px-4 py-2 text-sm transition-colors"
+                   th:text="${loc.label}">English</a>
+            </div>
+        </details>
+    </div>
+
+</html>

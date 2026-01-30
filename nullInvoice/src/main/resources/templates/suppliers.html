@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(#{suppliers.title})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
+        <div th:replace="~{fragments/nav :: navbar}"></div>
+        <div th:replace="~{fragments/nav :: mobileNav}"></div>
+
+        <main class="max-w-7xl mx-auto px-6 pt-20 pb-8">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" th:text="#{suppliers.heading}">Suppliers</h1>
+                    <p class="text-zinc-400" th:text="#{suppliers.subtitle}">Manage your supplier profiles</p>
+                </div>
+                <a href="/suppliers/new" class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                    <i class="fa-solid fa-plus"></i>
+                    <span th:text="#{suppliers.add}">Add Supplier</span>
+                </a>
+            </div>
+
+            <!-- Success Message -->
+            <div th:if="${saved}" class="mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <i class="fa-solid fa-check-circle mr-2"></i>
+                <span th:text="#{suppliers.saved}">Supplier saved successfully</span>
+            </div>
+
+            <!-- Deleted Message -->
+            <div th:if="${deleted}" class="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                <i class="fa-solid fa-trash mr-2"></i>
+                <span th:text="#{suppliers.deleted}">Supplier deleted successfully</span>
+            </div>
+
+            <div class="card bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6">
+                <form method="get" action="/suppliers" class="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div class="flex-1 min-w-[220px]">
+                        <label for="searchQuery" class="text-sm text-zinc-300" th:text="#{suppliers.search.label}">Search</label>
+                        <input id="searchQuery" name="q" th:value="${searchQuery}" type="text"
+                               th:placeholder="#{suppliers.search.placeholder}"
+                               class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="submit"
+                                class="btn-primary inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span th:text="#{suppliers.search.button}">Search</span>
+                        </button>
+                        <a th:if="${searchQuery != null and !searchQuery.isEmpty()}" href="/suppliers"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-700 text-sm hover:bg-zinc-800 transition-colors">
+                            <span th:text="#{suppliers.search.clear}">Clear</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Suppliers Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div th:each="supplier : ${suppliers}"
+                     th:classappend="${supplier.id == selectedSupplierId ? ' ring-2 ring-emerald-500' : ''}"
+                     class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6 relative">
+
+                    <!-- Selected Badge -->
+                    <div th:if="${supplier.id == selectedSupplierId}"
+                         class="btn-primary absolute top-4 right-4 px-2 py-1 rounded-full bg-emerald-500 text-zinc-900 text-xs font-semibold">
+                        <i class="fa-solid fa-check mr-1"></i>
+                        <span th:text="#{suppliers.selected}">Selected</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold mb-1" th:text="${supplier.name}">Supplier Name</h3>
+                        <p class="text-zinc-400 text-sm" th:if="${supplier.taxId}">
+                            <i class="fa-solid fa-id-card mr-1"></i>
+                            <span th:text="#{suppliers.tax_id}">Tax ID</span>:
+                            <span th:text="${supplier.taxId}">123456789</span>
+                        </p>
+                        <p class="text-zinc-400 text-sm" th:if="${supplier.vatId}">
+                            <i class="fa-solid fa-receipt mr-1"></i>
+                            <span th:text="#{suppliers.vat_id}">VAT ID</span>:
+                            <span th:text="${supplier.vatId}">BG123456789</span>
+                        </p>
+                    </div>
+
+                    <div class="text-sm text-zinc-500 mb-4">
+                        <p th:text="${supplier.addressLine1}">Address Line 1</p>
+                        <p th:if="${supplier.addressLine2}" th:text="${supplier.addressLine2}">Address Line 2</p>
+                        <p>
+                            <span th:text="${supplier.city}">City</span><span th:if="${supplier.postalCode}">, <span th:text="${supplier.postalCode}">12345</span></span>
+                        </p>
+                        <p th:text="${supplier.country}">Country</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <form th:action="@{'/suppliers/' + ${supplier.id} + '/select'}" method="post" th:if="${supplier.id != selectedSupplierId}">
+                            <button type="submit" class="btn-primary px-3 py-1.5 rounded-lg bg-emerald-500 text-zinc-900 text-sm font-semibold hover:bg-emerald-400 transition-colors">
+                                <i class="fa-solid fa-check mr-1"></i>
+                                <span th:text="#{suppliers.select}">Select</span>
+                            </button>
+                        </form>
+                        <a th:href="@{'/suppliers/' + ${supplier.id}}" class="px-3 py-1.5 rounded-lg border border-zinc-700 text-sm hover:bg-zinc-800 transition-colors">
+                            <i class="fa-solid fa-pen mr-1"></i>
+                            <span th:text="#{suppliers.edit}">Edit</span>
+                        </a>
+                        <button type="button" th:data-supplier-id="${supplier.id}" th:data-supplier-name="${supplier.name}"
+                                class="delete-supplier-btn px-3 py-1.5 rounded-lg border border-rose-700 text-rose-400 text-sm hover:bg-rose-900/30 transition-colors">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(suppliers)}" class="col-span-full">
+                    <div class="card bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+                        <i class="fa-solid fa-building text-4xl text-zinc-600 mb-4"></i>
+                        <p class="text-zinc-400 mb-4" th:text="#{suppliers.empty}">No suppliers configured yet</p>
+                        <a href="/suppliers/new" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span th:text="#{suppliers.empty.cta}">Add Your First Supplier</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    <div id="suppliersModalConfig" class="hidden"
+         th:attr="data-title=#{suppliers.modal.title}, data-default-text=#{suppliers.modal.default}, data-confirm-template=#{suppliers.modal.confirm}, data-with-invoices-template=#{suppliers.modal.with_invoices}, data-primary-label=#{suppliers.modal.confirm_delete}, data-secondary-label=#{suppliers.modal.cancel}">
+    </div>
+
+    <div th:replace="~{fragments/modal :: modal}"></div>
+
+    <script src="/js/modal.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/supplier-delete.js"></script>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

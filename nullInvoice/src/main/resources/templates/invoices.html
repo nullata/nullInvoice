@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(#{invoices.title})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
+        <div th:replace="~{fragments/nav :: navbar}"></div>
+        <div th:replace="~{fragments/nav :: mobileNav}"></div>
+
+        <main class="max-w-7xl mx-auto px-6 py-8">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" th:text="#{invoices.heading}">Invoices</h1>
+                    <p class="text-zinc-400" th:text="#{invoices.subtitle}">Manage your generated invoices</p>
+                </div>
+                <a href="/invoices/new" class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                    <i class="fa-solid fa-plus"></i>
+                    <span th:text="#{invoices.new}">New Invoice</span>
+                </a>
+            </div>
+
+            <!-- Export Section -->
+            <div id="exportSection" class="card bg-zinc-900 border border-zinc-800 rounded-xl mb-6"
+                 th:data-i18n-found="#{invoices.export.found}"
+                 th:data-i18n-none="#{invoices.export.none}"
+                 th:data-i18n-exceeds="#{invoices.export.exceeds_limit}"
+                 th:data-i18n-select-supplier="#{invoices.export.select_supplier}"
+                 th:data-i18n-downloading="#{invoices.export.downloading}"
+                 th:data-i18n-download="#{invoices.export.download}"
+                 th:data-i18n-error="#{invoices.export.error}">
+                <button type="button" id="exportToggle"
+                        class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-zinc-800/50 transition-colors rounded-xl">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-file-zipper text-amber-400"></i>
+                        <div>
+                            <span class="font-semibold" th:text="#{invoices.export.heading}">Bulk Export</span>
+                            <span class="text-zinc-400 text-sm ml-2" th:text="#{invoices.export.description}">Download multiple invoices as a ZIP file</span>
+                        </div>
+                    </div>
+                    <i id="exportChevron" class="fa-solid fa-chevron-down text-zinc-400 transition-transform"></i>
+                </button>
+                <div id="exportContent" class="hidden">
+                    <!-- Disabled overlay when no supplier selected -->
+                    <div id="exportDisabledOverlay" class="text-center px-4 py-6 text-zinc-400">
+                        <i class="fa-solid fa-circle-info text-2xl mb-2"></i>
+                        <p th:text="#{invoices.export.select_supplier}">Select a supplier to enable export</p>
+                    </div>
+                    <!-- Export controls (hidden when no supplier selected) -->
+                    <div id="exportControls" class="hidden px-4 py-4">
+                        <div class="flex flex-col gap-4 md:flex-row md:items-end">
+                            <div class="flex-1 min-w-[160px]">
+                                <label for="exportStartDate" class="text-sm text-zinc-300" th:text="#{invoices.export.start_date}">Start date</label>
+                                <input id="exportStartDate" type="date"
+                                       class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            </div>
+                            <div class="flex-1 min-w-[160px]">
+                                <label for="exportEndDate" class="text-sm text-zinc-300" th:text="#{invoices.export.end_date}">End date</label>
+                                <input id="exportEndDate" type="date"
+                                       class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div id="exportPreview" class="text-sm text-zinc-400">
+                                    <!-- Preview count will be inserted here -->
+                                </div>
+                                <button type="button" id="exportDownloadBtn"
+                                        class="btn-primary inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-500 text-zinc-900 font-semibold hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <i id="exportBtnIcon" class="fa-solid fa-download"></i>
+                                    <span id="exportBtnText" th:text="#{invoices.export.download}">Download ZIP</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Limit warning -->
+                        <div id="exportLimitWarning" class="hidden mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm">
+                            <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                            <span id="exportLimitWarningText"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6">
+                <form method="get" action="/invoices" class="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div class="flex-1 min-w-[180px]">
+                        <label for="supplierFilter" class="text-sm text-zinc-300" th:text="#{invoices.search.supplier}">Supplier</label>
+                        <select id="supplierFilter" name="supplier"
+                                class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            <option value="" th:text="#{invoices.search.all_suppliers}">All suppliers</option>
+                            <option th:each="s : ${suppliers}"
+                                    th:value="${s.id}"
+                                    th:selected="${filterSupplierId != null and filterSupplierId == s.id}"
+                                    th:text="${s.name}">Supplier Name</option>
+                        </select>
+                    </div>
+                    <div class="min-w-[160px]">
+                        <label for="searchType" class="text-sm text-zinc-300" th:text="#{invoices.search.by}">Search by</label>
+                        <select id="searchType" name="type"
+                                class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                            <option value="number" th:selected="${searchType == 'number'}" th:text="#{invoices.search.type.number}">Invoice number</option>
+                            <option value="date" th:selected="${searchType == 'date'}" th:text="#{invoices.search.type.date}">Issue date</option>
+                            <option value="client" th:selected="${searchType == 'client'}" th:text="#{invoices.search.type.client}">Client</option>
+                        </select>
+                    </div>
+                    <div class="flex-[2] min-w-[200px]">
+                        <label for="searchQuery" class="text-sm text-zinc-300" th:text="#{invoices.search.label}">Search</label>
+                        <input id="searchQuery" name="q" th:value="${searchQuery}" type="text"
+                               th:attr="data-placeholder-text=#{invoices.search.placeholder}, data-placeholder-date=#{invoices.search.date_placeholder}"
+                               th:placeholder="#{invoices.search.placeholder}"
+                               class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="submit"
+                                class="btn-primary inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span th:text="#{invoices.search.button}">Search</span>
+                        </button>
+                        <a th:if="${(searchQuery != null and !searchQuery.isEmpty()) or filterSupplierId != null}" href="/invoices"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-700 text-sm hover:bg-zinc-800 transition-colors">
+                            <span th:text="#{invoices.search.clear}">Clear</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Invoices Table -->
+            <div class="card bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-zinc-800/50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                                    <a class="inline-flex items-center gap-2 hover:text-zinc-200"
+                                       th:href="@{/invoices(page=0, q=${searchQuery}, type=${searchType}, supplier=${filterSupplierId}, sortBy='invoiceNumber', sortDir=${sortBy == 'invoiceNumber' and sortDir == 'asc' ? 'desc' : 'asc'})}">
+                                        <span th:text="#{invoices.table.invoice}">Invoice #</span>
+                                        <i th:if="${sortBy == 'invoiceNumber'}"
+                                           th:class="${sortDir == 'asc' ? 'fa-solid fa-chevron-up text-[10px]' : 'fa-solid fa-chevron-down text-[10px]'}"></i>
+                                    </a>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                                    <a class="inline-flex items-center gap-2 hover:text-zinc-200"
+                                       th:href="@{/invoices(page=0, q=${searchQuery}, type=${searchType}, supplier=${filterSupplierId}, sortBy='issueDate', sortDir=${sortBy == 'issueDate' and sortDir == 'asc' ? 'desc' : 'asc'})}">
+                                        <span th:text="#{invoices.table.date}">Date</span>
+                                        <i th:if="${sortBy == 'issueDate'}"
+                                           th:class="${sortDir == 'asc' ? 'fa-solid fa-chevron-up text-[10px]' : 'fa-solid fa-chevron-down text-[10px]'}"></i>
+                                    </a>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                                    <a class="inline-flex items-center gap-2 hover:text-zinc-200"
+                                       th:href="@{/invoices(page=0, q=${searchQuery}, type=${searchType}, supplier=${filterSupplierId}, sortBy='clientName', sortDir=${sortBy == 'clientName' and sortDir == 'asc' ? 'desc' : 'asc'})}">
+                                        <span th:text="#{invoices.table.client}">Client</span>
+                                        <i th:if="${sortBy == 'clientName'}"
+                                           th:class="${sortDir == 'asc' ? 'fa-solid fa-chevron-up text-[10px]' : 'fa-solid fa-chevron-down text-[10px]'}"></i>
+                                    </a>
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                                    <a class="inline-flex items-center gap-2 hover:text-zinc-200"
+                                       th:href="@{/invoices(page=0, q=${searchQuery}, type=${searchType}, supplier=${filterSupplierId}, sortBy='supplierName', sortDir=${sortBy == 'supplierName' and sortDir == 'asc' ? 'desc' : 'asc'})}">
+                                        <span th:text="#{invoices.table.supplier}">Supplier</span>
+                                        <i th:if="${sortBy == 'supplierName'}"
+                                           th:class="${sortDir == 'asc' ? 'fa-solid fa-chevron-up text-[10px]' : 'fa-solid fa-chevron-down text-[10px]'}"></i>
+                                    </a>
+                                </th>
+                                <th class="px-6 py-4 text-right text-xs font-semibold text-zinc-400 uppercase tracking-wider" th:text="#{invoices.table.total}">Total</th>
+                                <th class="px-6 py-4 text-center text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                                    <a class="inline-flex items-center gap-2 hover:text-zinc-200"
+                                       th:href="@{/invoices(page=0, q=${searchQuery}, type=${searchType}, supplier=${filterSupplierId}, sortBy='status', sortDir=${sortBy == 'status' and sortDir == 'asc' ? 'desc' : 'asc'})}">
+                                        <span th:text="#{invoices.table.status}">Status</span>
+                                        <i th:if="${sortBy == 'status'}"
+                                           th:class="${sortDir == 'asc' ? 'fa-solid fa-chevron-up text-[10px]' : 'fa-solid fa-chevron-down text-[10px]'}"></i>
+                                    </a>
+                                </th>
+                                <th class="px-6 py-4 text-center text-xs font-semibold text-zinc-400 uppercase tracking-wider" th:text="#{invoices.table.actions}">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-800">
+                            <tr th:each="invoice : ${invoices.content}" class="hover:bg-zinc-800/30 transition-colors">
+                                <td class="px-6 py-4">
+                                    <a class="font-semibold hover:underline"
+                                       th:href="@{'/invoices/' + ${invoice.invoiceNumber} + '?supplierId=' + ${invoice.supplierPartyId.id}}"
+                                       th:text="${invoice.invoiceNumber}">INV-000001</a>
+                                </td>
+                                <td class="px-6 py-4 text-zinc-300" th:text="${#dates.format(invoice.issueDate, 'dd.MM.yyyy')}">01.01.2024</td>
+                                <td class="px-6 py-4">
+                                    <span th:text="${invoice.clientName}" class="text-zinc-300">Client Name</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span th:text="${invoice.supplierName}" class="text-zinc-400 text-sm">Supplier Name</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span th:text="${#numbers.formatDecimal(invoice.total, 1, 2)}" class="text-zinc-100 text-strong">0.00</span>
+                                    <span th:text="${invoice.currencyCode}" class="text-zinc-500 text-sm ml-1">EUR</span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="border text-xs font-medium px-1.5 py-0.5 rounded-full"
+                                          th:classappend="${invoice.status == 'issued' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400 status-issued' : (invoice.status == 'unpaid' ? 'bg-amber-500/20 border-amber-500/30 text-amber-400 status-unpaid' : 'bg-zinc-500/20 border-zinc-500/30 text-zinc-400 status-default')}"
+                                          th:text="${#messages.msg('status.' + invoice.status)}">issued</span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <a th:href="@{'/api/v1/invoices/' + ${invoice.invoiceNumber} + '/pdf?supplierId=' + ${invoice.supplierPartyId.id}}"
+                                       class="btn-surface inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 transition-colors"
+                                       target="_blank">
+                                        <i class="fa-solid fa-file-pdf text-rose-400"></i>
+                                        <span th:text="#{invoices.action.pdf}">PDF</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${invoices.content.isEmpty()}">
+                                <td colspan="7" class="px-6 py-12 text-center text-zinc-500">
+                                    <i class="fa-solid fa-file-invoice text-4xl mb-4 block mx-auto"></i>
+                                    <p th:text="#{invoices.empty}">No invoices yet</p>
+                                    <a href="/invoices/new" class="text-emerald-400 hover:underline mt-2 inline-block" th:text="#{invoices.empty.cta}">
+                                        Create your first invoice
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div th:if="${totalPages > 1}" class="px-6 py-4 border-t border-zinc-800 flex items-center justify-between">
+                    <div class="text-sm text-zinc-400">
+                        <span th:text="#{invoices.pagination.page}">Page</span>
+                        <span th:text="${currentPage + 1}">1</span>
+                        <span th:text="#{invoices.pagination.of}">of</span>
+                        <span th:text="${totalPages}">1</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a th:href="@{/invoices(page=${currentPage - 1}, q=${searchQuery}, type=${searchType}, supplier=${filterSupplierId}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                           th:class="${currentPage == 0 ? 'pointer-events-none opacity-50' : ''}"
+                           class="px-3 py-1.5 rounded-lg border border-zinc-700 text-sm hover:bg-zinc-800 transition-colors">
+                            <i class="fa-solid fa-chevron-left"></i>
+                            <span th:text="#{invoices.pagination.prev}">Prev</span>
+                        </a>
+                        <a th:href="@{/invoices(page=${currentPage + 1}, q=${searchQuery}, type=${searchType}, supplier=${filterSupplierId}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                           th:class="${currentPage + 1 >= totalPages ? 'pointer-events-none opacity-50' : ''}"
+                           class="px-3 py-1.5 rounded-lg border border-zinc-700 text-sm hover:bg-zinc-800 transition-colors">
+                            <span th:text="#{invoices.pagination.next}">Next</span>
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
+        <div th:replace="~{fragments/modal :: modal}"></div>
+
+        <script src="/js/theme.js"></script>
+        <script src="/js/modal.js"></script>
+        <script src="/js/invoices.js"></script>
+        <script src="/js/invoice-export.js"></script>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

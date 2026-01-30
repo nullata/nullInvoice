@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <th:block th:fragment="common">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta th:if="${_csrf}" name="_csrf" th:content="${_csrf.token}"/>
+        <meta th:if="${_csrf}" name="_csrf_header" th:content="${_csrf.headerName}"/>
+        <link rel="icon" href="/images/favicon.png" type="image/png">
+    </th:block>
+    <th:block th:fragment="title(text)">
+        <title th:text="${text}">nullInvoice</title>
+    </th:block>
+    <th:block th:fragment="assets">
+        <!--  <script src="https://cdn.tailwindcss.com"></script>-->
+        <link rel="stylesheet" href="/fontawesome-free-7.1.0-web/css/all.min.css">
+        <link rel="stylesheet" href="/css/tailwind.css">
+    </th:block>
+</html>

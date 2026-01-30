@@ -1,0 +1,24 @@
+server:
+  port: ${APP_PORT:8080}
+
+spring:
+  datasource:
+    url: jdbc:mariadb://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:nullinvoice}${DB_PARAMS:?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Europe/Sofia}
+    username: ${DB_USER:nullinvoice}
+    password: ${DB_PASSWORD:}
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 1
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+
+springdoc:
+  api-docs:
+    path: /openapi
+  swagger-ui:
+    path: /swagger

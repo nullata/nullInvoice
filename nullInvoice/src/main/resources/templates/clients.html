@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(#{clients.title})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
+        <div th:replace="~{fragments/nav :: navbar}"></div>
+        <div th:replace="~{fragments/nav :: mobileNav}"></div>
+
+        <main class="max-w-7xl mx-auto px-6 py-8">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" th:text="#{clients.heading}">Clients</h1>
+                    <p class="text-zinc-400" th:text="#{clients.subtitle}">Manage your client/client profiles</p>
+                </div>
+                <a href="/clients/new" class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                    <i class="fa-solid fa-plus"></i>
+                    <span th:text="#{clients.add}">Add Client</span>
+                </a>
+            </div>
+
+            <!-- Success Message -->
+            <div th:if="${saved}" class="mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <i class="fa-solid fa-check-circle mr-2"></i>
+                <span th:text="#{clients.saved}">Client saved successfully</span>
+            </div>
+
+            <!-- Deleted Message -->
+            <div th:if="${deleted}" class="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                <i class="fa-solid fa-trash mr-2"></i>
+                <span th:text="#{clients.deleted}">Client deleted successfully</span>
+            </div>
+
+            <div class="card bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6">
+                <form method="get" action="/clients" class="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div class="flex-1 min-w-[220px]">
+                        <label for="searchQuery" class="text-sm text-zinc-300" th:text="#{clients.search.label}">Search</label>
+                        <input id="searchQuery" name="q" th:value="${searchQuery}" type="text"
+                               th:placeholder="#{clients.search.placeholder}"
+                               class="input-field mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="submit"
+                                class="btn-primary inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span th:text="#{clients.search.button}">Search</span>
+                        </button>
+                        <a th:if="${searchQuery != null and !searchQuery.isEmpty()}" href="/clients"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-700 text-sm hover:bg-zinc-800 transition-colors">
+                            <span th:text="#{clients.search.clear}">Clear</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Clients Table -->
+            <div class="card bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-zinc-800/50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider" th:text="#{clients.table.name}">Name</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider" th:text="#{clients.table.tax_id}">Tax ID</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider" th:text="#{clients.table.vat_id}">VAT ID</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider" th:text="#{clients.table.city}">City</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider" th:text="#{clients.table.country}">Country</th>
+                                <th class="px-6 py-4 text-center text-xs font-semibold text-zinc-400 uppercase tracking-wider" th:text="#{clients.table.actions}">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-800">
+                            <tr th:each="client : ${clients}" class="hover:bg-zinc-800/30 transition-colors">
+                                <td class="px-6 py-4">
+                                    <span class="font-semibold" th:text="${client.name}">Client Name</span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-zinc-400" th:text="${client.taxId ?: '-'}">123456789</td>
+                                <td class="px-6 py-4 text-sm text-zinc-400" th:text="${client.vatId ?: '-'}">BG123456789</td>
+                                <td class="px-6 py-4 text-zinc-300" th:text="${client.city}">City</td>
+                                <td class="px-6 py-4 text-zinc-300" th:text="${client.country}">Country</td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="inline-flex items-center gap-2">
+                                        <a th:href="@{'/clients/' + ${client.id}}"
+                                           class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm border border-zinc-700 hover:bg-zinc-800 transition-colors">
+                                            <i class="fa-solid fa-pen"></i>
+                                            <span th:text="#{clients.edit}">Edit</span>
+                                        </a>
+                                        <button type="button" th:data-client-id="${client.id}" th:data-client-name="${client.name}"
+                                                class="delete-client-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm border border-rose-700 text-rose-400 hover:bg-rose-900/30 transition-colors">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(clients)}">
+                                <td colspan="6" class="px-6 py-12 text-center text-zinc-500">
+                                    <i class="fa-solid fa-users text-4xl mb-4 block mx-auto"></i>
+                                    <p th:text="#{clients.empty}">No clients yet</p>
+                                    <p class="text-sm mt-2" th:text="#{clients.empty.note}">
+                                        Clients are automatically saved when you create invoices with new client info
+                                    </p>
+                                    <a href="/clients/new" class="text-emerald-400 hover:underline mt-2 inline-block" th:text="#{clients.empty.cta}">
+                                        Or add one manually
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+    <div id="clientsModalConfig" class="hidden"
+         th:attr="data-title=#{clients.modal.title}, data-default-text=#{clients.modal.default}, data-confirm-template=#{clients.modal.confirm}, data-with-invoices-template=#{clients.modal.with_invoices}, data-primary-label=#{clients.modal.confirm_delete}, data-secondary-label=#{clients.modal.cancel}">
+    </div>
+
+    <div th:replace="~{fragments/modal :: modal}"></div>
+
+    <script src="/js/modal.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/clients.js"></script>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

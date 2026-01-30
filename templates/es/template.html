@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Factura {{invoiceNumber}}</title>
+    <style>
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            color: #1f2933;
+            margin: 40px;
+            font-size: 12px;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+
+        h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+
+        .meta {
+            margin-bottom: 24px;
+        }
+
+        .parties-table {
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        .parties-table td {
+            width: 50%;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .party-panel {
+            padding-right: 20px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+
+        .items-table th,
+        .items-table td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 8px 4px;
+            text-align: left;
+        }
+
+        .items-table th {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #52606d;
+        }
+
+        .totals-wrapper {
+            text-align: right;
+        }
+
+        .totals-table {
+            width: 40%;
+            margin-left: auto;
+            border-collapse: collapse;
+        }
+
+        .totals-table td {
+            padding: 4px 8px;
+        }
+
+        .totals-table .label {
+            text-align: left;
+        }
+
+        .totals-table .value {
+            text-align: right;
+        }
+
+        .notes {
+            margin-top: 24px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Factura</h1>
+    <div class="meta">
+        <div><strong>Número de factura:</strong> {{invoiceNumber}}</div>
+        <div><strong>Fecha de emisión:</strong> {{issueDate}}</div>
+        {{dueDateRow}}
+    </div>
+
+    <table class="parties-table">
+        <tr>
+            <td class="party-panel">
+                <h3>Proveedor</h3>
+                <div>{{supplierName}}</div>
+                <div>{{supplierAddressLine1}}</div>
+                {{supplierAddressLine2Row}}
+                <div>{{supplierCityRegionPostal}}</div>
+                <div>{{supplierCountry}}</div>
+                {{supplierTaxIdRow}}
+                {{supplierVatIdRow}}
+                {{supplierEmailRow}}
+                {{supplierPhoneRow}}
+            </td>
+            <td>
+                <h3>Cliente</h3>
+                <div>{{clientName}}</div>
+                <div>{{clientAddressLine1}}</div>
+                {{clientAddressLine2Row}}
+                <div>{{clientCityRegionPostal}}</div>
+                <div>{{clientCountry}}</div>
+                {{clientTaxIdRow}}
+                {{clientVatIdRow}}
+                {{clientEmailRow}}
+                {{clientPhoneRow}}
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Precio unitario</th>
+                <th>Descuento</th>
+                <th>Impuesto %</th>
+                <th>Impuesto</th>
+                <th>Total de línea</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{itemsRows}}
+        </tbody>
+    </table>
+
+    <div class="totals-wrapper">
+        <table class="totals-table">
+            <tr>
+                <td class="label">Subtotal</td>
+                <td class="value">{{subtotal}}</td>
+            </tr>
+            <tr>
+                <td class="label">Descuento</td>
+                <td class="value">{{discountTotal}}</td>
+            </tr>
+            <tr>
+                <td class="label">Impuesto</td>
+                <td class="value">{{taxTotal}}</td>
+            </tr>
+            <tr>
+                <td class="label"><strong>Total</strong></td>
+                <td class="value"><strong>{{total}}</strong></td>
+            </tr>
+        </table>
+    </div>
+
+    {{notesSection}}
+</body>
+</html>

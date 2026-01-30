@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(#{setup.title})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen">
+        <!-- Simple navigation bar -->
+        <nav class="nav-bar border-b border-zinc-700 bg-zinc-900/80 backdrop-blur sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3 text-xl font-bold">
+                        <img src="/images/logo.svg" alt="nullInvoice" class="h-[30px] w-auto">
+                        <span>nullInvoice</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <!-- Language Selector -->
+                        <details class="relative">
+                            <summary
+                                class="lang-selector-btn list-none cursor-pointer rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                <i class="fa-solid fa-globe mr-2 text-emerald-400"></i>
+                                <span th:text="${#strings.toUpperCase(#locale.language)}">EN</span>
+                                <i class="fa-solid fa-chevron-down ml-2 text-[10px] text-zinc-400"></i>
+                            </summary>
+                            <div
+                                class="lang-selector-menu absolute right-0 mt-2 w-48 rounded-lg border border-zinc-700 bg-zinc-900 shadow-lg z-10">
+                                <a th:each="loc : ${supportedLocales}" th:href="@{/setup(lang=${loc.code})}"
+                                   th:classappend="${#locale.toLanguageTag() == loc.code} ? ' bg-emerald-500/10 text-emerald-300' : ' text-zinc-300 hover:bg-zinc-800'"
+                                   class="lang-selector-option block px-4 py-2 text-sm transition-colors"
+                                   th:text="${loc.label}">English</a>
+                            </div>
+                        </details>
+                        <!-- Theme Toggle -->
+                        <button id="themeToggle" type="button" class="p-2 rounded-lg hover:bg-zinc-800 transition-colors"
+                                th:title="#{nav.theme_toggle}" title="Toggle theme">
+                            <i class="fa-solid fa-moon text-lg" id="darkIcon"></i>
+                            <i class="fa-solid fa-sun text-lg hidden" id="lightIcon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="min-h-[calc(100vh-73px)] flex items-center justify-center px-4 py-12">
+            <div class="w-full max-w-md">
+                <!-- Logo/Brand -->
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold mb-2">nullInvoice</h1>
+                    <p class="text-zinc-400 text-sm" th:text="#{setup.subtitle}">Initial Setup</p>
+                </div>
+
+                <!-- Setup Card -->
+                <div class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6 sm:p-8 shadow-xl">
+                    <h2 class="text-xl font-semibold mb-6" th:text="#{setup.heading}">Create Admin Account</h2>
+
+                    <!-- Error Message -->
+                    <div th:if="${errorMessage}" class="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                        <i class="fa-solid fa-exclamation-circle mr-2"></i>
+                        <span th:text="${errorMessage}">Error message</span>
+                    </div>
+
+                    <!-- Setup Form -->
+                    <form th:action="@{/setup}" method="post" th:object="${setupForm}">
+                        <!-- Username -->
+                        <div class="mb-4">
+                            <label for="username" class="block text-sm font-medium mb-2" th:text="#{setup.username}">Username</label>
+                            <input type="text"
+                                   id="username"
+                                   th:field="*{username}"
+                                   class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
+                                   required
+                                   autofocus>
+                            <p th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="text-red-400 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-4">
+                            <label for="password" class="block text-sm font-medium mb-2" th:text="#{setup.password}">Password</label>
+                            <input type="password"
+                                   id="password"
+                                   th:field="*{password}"
+                                   class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
+                                   required>
+                            <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="text-red-400 text-xs mt-1"></p>
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{setup.password.hint}">Minimum 8 characters</p>
+                        </div>
+
+                        <!-- Repeat Password -->
+                        <div class="mb-4">
+                            <label for="passwordRepeat" class="block text-sm font-medium mb-2" th:text="#{setup.passwordRepeat}">Repeat Password</label>
+                            <input type="password"
+                                   id="passwordRepeat"
+                                   th:field="*{passwordRepeat}"
+                                   class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
+                                   required>
+                        </div>
+
+                        <!-- Password Hint (Optional) -->
+                        <div class="mb-6">
+                            <label for="passwordHint" class="block text-sm font-medium mb-2" th:text="#{setup.passwordHint}">Password Hint (Optional)</label>
+                            <input type="text"
+                                   id="passwordHint"
+                                   th:field="*{passwordHint}"
+                                   class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{setup.passwordHint.description}">A reminder if you forget your password</p>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit"
+                                class="btn-primary w-full px-4 py-2.5 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors text-sm">
+                            <i class="fa-solid fa-check mr-2"></i>
+                            <span th:text="#{setup.submit}">Create Admin Account</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Footer Info -->
+                <div class="text-center mt-4 text-zinc-500 text-xs">
+                    <p th:text="#{setup.footer}">This will be the only admin account for your nullInvoice instance</p>
+                </div>
+            </div>
+        </main>
+        
+        <div th:replace="~{fragments/footer :: footer}"></div>
+
+        <!-- Theme Toggle Script -->
+        <script src="/js/theme.js"></script>
+    </body>
+</html>

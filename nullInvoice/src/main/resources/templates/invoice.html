@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(|Invoice ${invoice.invoiceNumber}|)}"></th:block>
+    </head>
+    <body>
+        <h1>Invoice</h1>
+        <div class="meta">
+            <div><strong>Invoice Number:</strong> <span th:text="${invoice.invoiceNumber}"></span></div>
+            <div><strong>Issue Date:</strong> <span th:text="${invoice.issueDate}"></span></div>
+            <div th:if="${invoice.hasDueDate()}"><strong>Due Date:</strong> <span th:text="${invoice.dueDate}"></span></div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h3>Supplier</h3>
+                <div th:text="${invoice.supplier.name}"></div>
+                <div th:text="${invoice.supplier.addressLine1}"></div>
+                <div th:if="${invoice.supplier.addressLine2}" th:text="${invoice.supplier.addressLine2}"></div>
+                <div>
+                    <span th:text="${invoice.supplier.city}"></span>
+                    <span th:if="${invoice.supplier.region}">, <span th:text="${invoice.supplier.region}"></span></span>
+                    <span th:text="${invoice.supplier.postalCode}"></span>
+                </div>
+                <div th:text="${invoice.supplier.country}"></div>
+                <div th:if="${invoice.supplier.taxId}">Tax ID: <span th:text="${invoice.supplier.taxId}"></span></div>
+                <div th:if="${invoice.supplier.vatId}">VAT ID: <span th:text="${invoice.supplier.vatId}"></span></div>
+                <div th:if="${invoice.supplier.email}">Email: <span th:text="${invoice.supplier.email}"></span></div>
+                <div th:if="${invoice.supplier.phone}">Phone: <span th:text="${invoice.supplier.phone}"></span></div>
+            </div>
+
+            <div class="panel">
+                <h3>Client</h3>
+                <div th:text="${invoice.client.name}"></div>
+                <div th:text="${invoice.client.addressLine1}"></div>
+                <div th:if="${invoice.client.addressLine2}" th:text="${invoice.client.addressLine2}"></div>
+                <div>
+                    <span th:text="${invoice.client.city}"></span>
+                    <span th:if="${invoice.client.region}">, <span th:text="${invoice.client.region}"></span></span>
+                    <span th:text="${invoice.client.postalCode}"></span>
+                </div>
+                <div th:text="${invoice.client.country}"></div>
+                <div th:if="${invoice.client.taxId}">Tax ID: <span th:text="${invoice.client.taxId}"></span></div>
+                <div th:if="${invoice.client.vatId}">VAT ID: <span th:text="${invoice.client.vatId}"></span></div>
+                <div th:if="${invoice.client.email}">Email: <span th:text="${invoice.client.email}"></span></div>
+                <div th:if="${invoice.client.phone}">Phone: <span th:text="${invoice.client.phone}"></span></div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Unit Price</th>
+                    <th>Tax</th>
+                    <th>Line Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${invoice.items}">
+                    <td th:text="${item.lineNumber}"></td>
+                    <td th:text="${item.description}"></td>
+                    <td th:text="${item.quantity}"></td>
+                    <td th:text="${item.unitPrice}"></td>
+                    <td th:text="${item.taxRate}"></td>
+                    <td th:text="${item.lineTotal}"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="totals">
+            <table>
+                <tr>
+                    <td>Subtotal</td>
+                    <td th:text="${invoice.subtotal}"></td>
+                </tr>
+                <tr>
+                    <td>Tax</td>
+                    <td th:text="${invoice.taxTotal}"></td>
+                </tr>
+                <tr>
+                    <td><strong>Total</strong></td>
+                    <td><strong th:text="${invoice.total}"></strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="notes" th:if="${invoice.notes}"><strong>Notes:</strong>
+            <span th:text="${invoice.notes}"></span>
+        </div>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

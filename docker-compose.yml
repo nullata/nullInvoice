@@ -1,0 +1,15 @@
+services:
+  nullinvoice:
+    build: .
+    container_name: nullinvoice
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      - TZ=${TZ:-Europe/Sofia}
+      - APP_PORT=8080
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-nullinvoice}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      - DB_NAME=${DB_NAME:-nullinvoice}
+    restart: unless-stopped

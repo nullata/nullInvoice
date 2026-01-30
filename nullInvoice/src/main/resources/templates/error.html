@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(|Error ${statusCode}|)}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12 flex items-center justify-center">
+        <div class="text-center px-6">
+            <div class="mb-8">
+                <span class="text-8xl font-bold text-rose-500" th:text="${statusCode}">500</span>
+            </div>
+            <h1 class="text-3xl font-semibold mb-4" th:text="${errorMessage}">An error occurred</h1>
+            <p class="text-zinc-400 mb-2" th:if="${path}">
+                Path: <code class="bg-zinc-800 px-2 py-1 rounded text-sm" th:text="${path}">/unknown</code>
+            </p>
+            <p class="text-zinc-500 text-sm mb-4" th:text="${#temporals.format(timestamp, 'yyyy-MM-dd HH:mm:ss')}">2024-01-01 12:00:00</p>
+
+            <!-- Configuration error hint -->
+            <div th:if="${isConfigError}" class="mb-8 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 max-w-md mx-auto">
+                <i class="fa-solid fa-lightbulb mr-2"></i>
+                This looks like a setup issue. Try <a href="/templates" class="underline hover:text-amber-300">creating a template</a> or <a href="/suppliers" class="underline hover:text-amber-300">configuring a supplier</a>.
+            </div>
+
+            <div th:unless="${isConfigError}" class="mb-8"></div>
+            <div class="flex gap-4 justify-center">
+                <a href="/" class="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-6 py-3 font-semibold text-zinc-900 hover:bg-emerald-400 transition-colors">
+                    <i class="fa-solid fa-house"></i>
+                    Go Home
+                </a>
+                <a href="javascript:history.back()" class="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-6 py-3 font-semibold text-zinc-300 hover:bg-zinc-800 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Go Back
+                </a>
+            </div>
+        </div>
+
+        <script src="/js/theme.js"></script>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

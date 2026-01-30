@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:replace="~{fragments/head :: title(#{dashboard.title})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
+        <div th:replace="~{fragments/nav :: navbar}"></div>
+        <div th:replace="~{fragments/nav :: mobileNav}"></div>
+
+        <main class="max-w-7xl mx-auto px-6 py-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold mb-2" th:text="#{dashboard.heading}">Dashboard</h1>
+                <p class="text-zinc-400" th:text="#{dashboard.subtitle}">Overview of your nullInvoice instance</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <a href="/invoices" class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-emerald-500/50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                            <i class="fa-solid fa-file-invoice text-xl text-emerald-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold" th:text="${stats.invoiceCount}">0</p>
+                            <p class="text-zinc-400 text-sm" th:text="#{dashboard.stats.invoices}">Invoices</p>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="/suppliers" class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-blue-500/50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                            <i class="fa-solid fa-building text-xl text-blue-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold" th:text="${stats.supplierCount}">0</p>
+                            <p class="text-zinc-400 text-sm" th:text="#{dashboard.stats.suppliers}">Suppliers</p>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="/clients" class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-purple-500/50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                            <i class="fa-solid fa-users text-xl text-purple-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold" th:text="${stats.clientCount}">0</p>
+                            <p class="text-zinc-400 text-sm" th:text="#{dashboard.stats.clients}">Clients</p>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="/templates" class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-amber-500/50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                            <i class="fa-solid fa-palette text-xl text-amber-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold" th:text="${stats.templateCount}">0</p>
+                            <p class="text-zinc-400 text-sm" th:text="#{dashboard.stats.templates}">Templates</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                <h2 class="text-xl font-semibold mb-4">
+                    <i class="fa-solid fa-bolt mr-2 text-zinc-400"></i>
+                    <span th:text="#{dashboard.quick_actions}">Quick Actions</span>
+                </h2>
+                <div class="flex flex-wrap gap-3">
+                    <a href="/invoices/new" class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                        <i class="fa-solid fa-plus"></i>
+                        <span th:text="#{dashboard.actions.new_invoice}">New Invoice</span>
+                    </a>
+                    <a href="/suppliers/new" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors">
+                        <i class="fa-solid fa-building"></i>
+                        <span th:text="#{dashboard.actions.add_supplier}">Add Supplier</span>
+                    </a>
+                    <a href="/clients/new" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span th:text="#{dashboard.actions.add_client}">Add Client</span>
+                    </a>
+                    <a href="/templates" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors">
+                        <i class="fa-solid fa-palette"></i>
+                        <span th:text="#{dashboard.actions.manage_templates}">Manage Templates</span>
+                    </a>
+                </div>
+            </div>
+        </main>
+
+        <script src="/js/theme.js"></script>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

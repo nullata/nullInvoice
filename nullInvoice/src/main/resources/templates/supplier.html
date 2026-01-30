@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:if="${isNew}" th:replace="~{fragments/head :: title(#{supplier_form.title.new})}"></th:block>
+        <th:block th:if="${!isNew}" th:replace="~{fragments/head :: title(#{supplier_form.title.edit})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
+        <div th:replace="~{fragments/nav :: navbar}"></div>
+        <div th:replace="~{fragments/nav :: mobileNav}"></div>
+
+        <main class="max-w-3xl mx-auto px-6 py-8">
+            <div class="mb-8">
+                <a href="/suppliers" class="text-zinc-400 hover:text-zinc-200 text-sm mb-4 inline-block">
+                    <i class="fa-solid fa-arrow-left mr-1"></i>
+                    <span th:text="#{supplier_form.back}">Back to Suppliers</span>
+                </a>
+                <h1 class="text-3xl font-bold" th:if="${isNew}" th:text="#{supplier_form.heading.new}">Add Supplier</h1>
+                <h1 class="text-3xl font-bold" th:if="${!isNew}" th:text="#{supplier_form.heading.edit}">Edit Supplier</h1>
+            </div>
+
+            <!-- Success Message -->
+            <div th:if="${saved}" class="mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <i class="fa-solid fa-check-circle mr-2"></i>
+                <span th:text="#{supplier_form.saved}">Supplier profile saved successfully</span>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${error}" class="mb-6 p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                <i class="fa-solid fa-exclamation-circle mr-2"></i>
+                <span th:text="${error}">Error message</span>
+            </div>
+
+            <form th:action="@{/suppliers}" method="post" th:object="${supplier}" class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                <input type="hidden" th:field="*{id}">
+
+                <!-- Identity Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-building text-zinc-400"></i>
+                            <span th:text="#{supplier_form.section.identity}">Identity</span>
+                        </span>
+                        <span th:if="${!isNew}" class="text-sm font-normal text-zinc-400">
+                            <span th:text="#{supplier_form.supplier_id}">Supplier ID</span>: <span th:text="${supplier.id}" class="text-zinc-300"></span>
+                        </span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{supplier_form.name_label}">Supplier Name</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{name}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-rose-400 text-sm mt-1"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.tax_id}">Tax ID</label>
+                            <input type="text" th:field="*{taxId}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.vat_id}">VAT ID</label>
+                            <input type="text" th:field="*{vatId}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-location-dot text-zinc-400"></i>
+                        <span th:text="#{supplier_form.section.address}">Address</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{supplier_form.address1}">Address Line 1</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{addressLine1}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p th:if="${#fields.hasErrors('addressLine1')}" th:errors="*{addressLine1}" class="text-rose-400 text-sm mt-1"></p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.address2}">Address Line 2</label>
+                            <input type="text" th:field="*{addressLine2}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{supplier_form.city}">City</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{city}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p th:if="${#fields.hasErrors('city')}" th:errors="*{city}" class="text-rose-400 text-sm mt-1"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.region}">Region / State</label>
+                            <input type="text" th:field="*{region}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.postal}">Postal Code</label>
+                            <input type="text" th:field="*{postalCode}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{supplier_form.country}">Country</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{country}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p th:if="${#fields.hasErrors('country')}" th:errors="*{country}" class="text-rose-400 text-sm mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-address-book text-zinc-400"></i>
+                        <span th:text="#{supplier_form.section.contact}">Contact</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.email}">Email</label>
+                            <input type="email" th:field="*{email}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.phone}">Phone</label>
+                            <input type="text" th:field="*{phone}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Localization Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-globe text-zinc-400"></i>
+                        <span th:text="#{supplier_form.section.localization}">Localization</span>
+                    </h2>
+                    <p class="text-zinc-400 text-sm mb-4" th:text="#{supplier_form.localization.desc}">
+                        Configure formatting for invoices created by this supplier. Leave blank to use global defaults.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{supplier_form.locale_code}">Locale Code</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{localeCode}" th:placeholder="#{supplier_form.locale_code.placeholder}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.locale_code_help}">Used for invoice series grouping</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{supplier_form.language}">Language</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{localeLanguage}" th:placeholder="#{supplier_form.language.placeholder}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.language_help}">ISO 639 language code</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{supplier_form.country_code}">Country</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{localeCountry}" th:placeholder="#{supplier_form.country_code.placeholder}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.country_code_help}">ISO 3166 country code</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{supplier_form.currency_code}">Currency Code</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{currencyCode}" th:placeholder="#{supplier_form.currency_code.placeholder}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.currency_code_help}">ISO 4217 currency code</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{supplier_form.date_pattern}">Date Pattern</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{datePattern}" th:placeholder="#{supplier_form.date_pattern.placeholder}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.date_pattern_help}">Java DateTimeFormatter pattern</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invoice Settings Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-file-invoice text-zinc-400"></i>
+                        <span th:text="#{supplier_form.section.invoice_settings}">Invoice Settings</span>
+                    </h2>
+                    <p class="text-zinc-400 text-sm mb-4" th:text="#{supplier_form.invoice_settings.desc}">
+                        Configure invoice numbering and defaults for this supplier.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.default_tax_rate}">Default Tax Rate</label>
+                            <input type="number" th:field="*{defaultTaxRate}" th:placeholder="#{supplier_form.default_tax_rate.placeholder}" min="0" step="0.0001"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.default_tax_rate_help}">Decimal rate (0.20 = 20%)</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.invoice_prefix}">Invoice Prefix</label>
+                            <input type="text" th:field="*{invoicePrefix}" th:placeholder="#{supplier_form.invoice_prefix.placeholder}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.invoice_prefix_help}">Optional prefix (e.g. INV-)</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.invoice_start}">Invoice Start Number</label>
+                            <input type="number" th:field="*{invoiceStartNumber}" th:placeholder="#{supplier_form.invoice_start.placeholder}" min="1"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.invoice_start_help}">Starting invoice number for this supplier</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.invoice_digits}">Invoice Number Digits</label>
+                            <input type="number" th:field="*{invoiceNumberDigits}" th:placeholder="#{supplier_form.invoice_digits.placeholder}" min="1" max="20"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.invoice_digits_help}">Total digits with zero padding (default: 6)</p>
+                        </div>
+                        <div th:if="${!isNew}">
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.last_invoice}">Last Invoice Number</label>
+                            <input type="number" th:field="*{lastInvoiceNumber}" placeholder="Not generated yet" disabled
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-zinc-400">
+                            <p class="text-zinc-500 text-xs mt-1" th:text="#{supplier_form.last_invoice_help}">Auto-assigned counter (read-only)</p>
+                        </div>
+                        <div th:if="${!isNew}">
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{supplier_form.effective_template.label}">Effective Template</label>
+                            <input type="text" th:if="${effectiveTemplateName != null}" th:value="${effectiveTemplateName}" disabled
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-zinc-400">
+                            <input type="text" th:if="${effectiveTemplateName == null}" th:value="#{supplier_form.effective_template.none}" disabled
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-zinc-400">
+                            <p class="text-zinc-500 text-xs mt-1">
+                                <span th:if="${effectiveTemplateSourceKey == 'supplier'}" th:text="#{supplier_form.effective_template.source.supplier}">Supplier default</span>
+                                <span th:if="${effectiveTemplateSourceKey == 'global'}" th:text="#{supplier_form.effective_template.source.global}">Global default</span>
+                                <span th:if="${effectiveTemplateSourceKey == null}" th:text="#{supplier_form.effective_template.source.none}">No default template configured</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-4">
+                    <button type="submit" class="btn-primary px-6 py-2.5 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                        <i class="fa-solid fa-check mr-2"></i>
+                        <span th:if="${isNew}" th:text="#{supplier_form.actions.add}">Add Supplier</span>
+                        <span th:if="${!isNew}" th:text="#{supplier_form.actions.save}">Save Changes</span>
+                    </button>
+                    <a href="/suppliers" class="px-6 py-2.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors">
+                        <span th:text="#{supplier_form.actions.cancel}">Cancel</span>
+                    </a>
+                </div>
+            </form>
+
+            <!-- Delete Section (only for existing suppliers) -->
+            <div th:if="${!isNew}" class="mt-8 card bg-zinc-900 border border-rose-900/50 rounded-xl p-6">
+                <h2 class="text-lg font-semibold mb-2 text-rose-400 flex items-center gap-2">
+                    <i class="fa-solid fa-trash text-rose-400"></i>
+                    <span th:text="#{supplier_form.danger.title}">Danger Zone</span>
+                </h2>
+                <p class="text-zinc-400 text-sm mb-4" th:text="#{supplier_form.danger.description}">
+                    Deleting a supplier hides them from lists but preserves existing invoice data.
+                </p>
+                <button type="button" id="deleteBtn" class="px-6 py-2.5 rounded-lg bg-rose-600 text-white font-semibold hover:bg-rose-500 transition-colors">
+                    <i class="fa-solid fa-trash mr-2"></i>
+                    <span th:text="#{supplier_form.danger.delete}">Delete Supplier</span>
+                </button>
+            </div>
+
+        <div id="supplierModalConfig" class="hidden"
+             th:attr="data-supplier-id=${supplier.id}, data-title=#{supplier_form.modal.title}, data-default-text=#{supplier_form.modal.default}, data-with-invoices-template=#{supplier_form.modal.with_invoices}, data-primary-label=#{supplier_form.modal.confirm_delete}, data-secondary-label=#{supplier_form.modal.cancel}">
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/modal :: modal}"></div>
+
+    <script src="/js/modal.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/supplier-delete.js"></script>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

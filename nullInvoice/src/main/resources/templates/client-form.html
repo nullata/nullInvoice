@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:replace="~{fragments/head :: common}"></th:block>
+        <th:block th:if="${isNew}" th:replace="~{fragments/head :: title(#{client_form.title.new})}"></th:block>
+        <th:block th:if="${!isNew}" th:replace="~{fragments/head :: title(#{client_form.title.edit})}"></th:block>
+        <th:block th:replace="~{fragments/head :: assets}"></th:block>
+    </head>
+    <body class="bg-zinc-950 text-zinc-100 min-h-screen pb-12">
+        <div th:replace="~{fragments/nav :: navbar}"></div>
+        <div th:replace="~{fragments/nav :: mobileNav}"></div>
+
+        <main class="max-w-3xl mx-auto px-6 py-8">
+            <div class="mb-8">
+                <a href="/clients" class="text-zinc-400 hover:text-zinc-200 text-sm mb-4 inline-block">
+                    <i class="fa-solid fa-arrow-left mr-1"></i>
+                    <span th:text="#{client_form.back}">Back to Clients</span>
+                </a>
+                <h1 class="text-3xl font-bold" th:if="${isNew}" th:text="#{client_form.heading.new}">Add Client</h1>
+                <h1 class="text-3xl font-bold" th:if="${!isNew}" th:text="#{client_form.heading.edit}">Edit Client</h1>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${error}" class="mb-6 p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                <i class="fa-solid fa-exclamation-circle mr-2"></i>
+                <span th:text="${error}">Error message</span>
+            </div>
+
+            <form th:action="@{/clients}" method="post" th:object="${client}" class="card bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                <input type="hidden" th:field="*{id}">
+
+                <!-- Identity Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-id-card text-zinc-400"></i>
+                        <span th:text="#{client_form.section.identity}">Identity</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{client_form.name_label}">Name</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{name}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-rose-400 text-sm mt-1"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{client_form.tax_id}">Tax ID</label>
+                            <input type="text" th:field="*{taxId}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{client_form.vat_id}">VAT ID</label>
+                            <input type="text" th:field="*{vatId}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-location-dot text-zinc-400"></i>
+                        <span th:text="#{client_form.section.address}">Address</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{client_form.address1}">Address Line 1</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{addressLine1}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p th:if="${#fields.hasErrors('addressLine1')}" th:errors="*{addressLine1}" class="text-rose-400 text-sm mt-1"></p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{client_form.address2}">Address Line 2</label>
+                            <input type="text" th:field="*{addressLine2}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{client_form.city}">City</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{city}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p th:if="${#fields.hasErrors('city')}" th:errors="*{city}" class="text-rose-400 text-sm mt-1"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{client_form.region}">Region / State</label>
+                            <input type="text" th:field="*{region}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{client_form.postal}">Postal Code</label>
+                            <input type="text" th:field="*{postalCode}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                <span th:text="#{client_form.country}">Country</span>
+                                <span class="text-rose-400">*</span>
+                            </label>
+                            <input type="text" th:field="*{country}" required
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <p th:if="${#fields.hasErrors('country')}" th:errors="*{country}" class="text-rose-400 text-sm mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-address-book text-zinc-400"></i>
+                        <span th:text="#{client_form.section.contact}">Contact</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{client_form.email}">Email</label>
+                            <input type="email" th:field="*{email}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1" th:text="#{client_form.phone}">Phone</label>
+                            <input type="text" th:field="*{phone}"
+                                   class="input-field w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-4">
+                    <button type="submit" class="btn-primary px-6 py-2.5 rounded-lg bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition-colors">
+                        <i class="fa-solid fa-check mr-2"></i>
+                        <span th:if="${isNew}" th:text="#{client_form.actions.add}">Add Client</span>
+                        <span th:if="${!isNew}" th:text="#{client_form.actions.save}">Save Changes</span>
+                    </button>
+                    <a href="/clients" class="px-6 py-2.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors">
+                        <span th:text="#{client_form.actions.cancel}">Cancel</span>
+                    </a>
+                </div>
+            </form>
+        </main>
+
+        <script src="/js/theme.js"></script>
+
+        <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
