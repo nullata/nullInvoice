@@ -53,7 +53,7 @@ public class TemplateService {
     /**
      * Resolves the HTML for an invoice.Returns stored HTML if available, otherwise re-renders from template
      * @param invoice
-     * @return 
+     * @return
      */
     public String resolveInvoiceHtml(Invoices invoice) {
         if (invoice.getInvoiceHtml() != null && !invoice.getInvoiceHtml().isBlank()) {
@@ -281,6 +281,10 @@ public class TemplateService {
     private LocalDate toLocalDate(Date value) {
         if (value == null) {
             return null;
+        }
+        // handle java.sql.Date which doesn't support toInstant()
+        if (value instanceof java.sql.Date sqlDate) {
+            return sqlDate.toLocalDate();
         }
         return value.toInstant().atZone(ZoneOffset.UTC).toLocalDate();
     }
