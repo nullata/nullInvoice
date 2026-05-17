@@ -185,6 +185,136 @@ curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
      -o invoice.pdf
 ```
 
+## Async Invoice Generation Queue
+
+The async endpoints are an alternative to `POST /api/v1/invoices/generate` for callers that don't want to wait for invoice generation to complete in-line. A request is persisted to a queue, a background worker generates the invoice, and clients poll for status.
+
+**When to use the queue vs. the synchronous endpoint:**
+
+- **Synchronous (`/api/v1/invoices/generate`)** - fastest round-trip, fire-and-receive. Recommended for most integrations.
+- **Async (`/api/v1/invoice-requests`)** - useful if your caller can't tolerate the request being open for the full generation time, or if you want decoupled retry handling.
+
+Both paths produce the same `Invoices` rows with the same numbering guarantees - the queue worker funnels through the same supplier-row lock as the sync endpoint, so invoice numbers stay sequential and conflict-free across both paths.
+
+### Submit a Generation Request
+
+`POST /api/v1/invoice-requests`
+
+**Authentication required** - Include Bearer token in `Authorization` header.
+
+**Request body:** identical to `POST /api/v1/invoices/generate`. The `response_type` field is ignored - async requests only persist the queue row; once the request reaches `COMPLETED`, fetch the invoice using the standard retrieval endpoints with the `invoiceNumber` returned in the status response.
+
+```bash
+curl -X POST http://localhost:8080/api/v1/invoice-requests \
+  -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "supplier_id": 1,
+  "client": { "id": 42 },
+  "items": [
+    { "description": "Consulting", "quantity": 1, "unit_price": 1000, "tax_rate": 0.2 }
+  ]
+}'
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "requestId": 42,
+  "status": "PENDING",
+  "message": "invoice generation request queued",
+  "createdAt": "2026-05-17T10:00:00"
+}
+```
+
+The submit returns as soon as the queue row is persisted - invoice generation has not started yet at this point.
+
+### Check Request Status
+
+`GET /api/v1/invoice-requests/{requestId}`
+
+**Authentication required** - Include Bearer token in `Authorization` header.
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     http://localhost:8080/api/v1/invoice-requests/42
+```
+
+**Response while pending:**
+
+```json
+{
+  "requestId": 42,
+  "status": "PENDING",
+  "attempts": 0,
+  "createdAt": "2026-05-17T10:00:00"
+}
+```
+
+**Response on success:**
+
+```json
+{
+  "requestId": 42,
+  "status": "COMPLETED",
+  "invoiceId": 107,
+  "invoiceNumber": "INV-000042",
+  "attempts": 1,
+  "createdAt": "2026-05-17T10:00:00",
+  "completedAt": "2026-05-17T10:00:02"
+}
+```
+
+**Response on permanent failure:**
+
+```json
+{
+  "requestId": 42,
+  "status": "FAILED",
+  "errorMessage": "supplier not found",
+  "attempts": 3,
+  "createdAt": "2026-05-17T10:00:00",
+  "completedAt": "2026-05-17T10:00:06"
+}
+```
+
+### Fetching the Generated Invoice
+
+Once the status endpoint reports `COMPLETED`, use the `invoiceNumber` it returns with the standard retrieval endpoints:
+
+```bash
+# JSON metadata
+curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     http://localhost:8080/api/v1/invoices/INV-000042
+
+# PDF
+curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     http://localhost:8080/api/v1/invoices/INV-000042/pdf \
+     -o invoice.pdf
+```
+
+The async queue is purely about generation mechanics - the invoice itself is a regular `Invoices` row indistinguishable from one produced by the sync endpoint, so retrieval uses the same surface.
+
+### Status Lifecycle
+
+```
+new request  ->  PENDING
+worker succeeds  ->  COMPLETED
+worker error, attempts < max  ->  PENDING (will retry)
+attempts >= max_attempts  ->  FAILED  (terminal)
+```
+
+- `PENDING` is the only retry-eligible state. A crash mid-processing rolls back cleanly and the row stays at `PENDING` - the crash does not count toward the retry budget.
+- `attempts` only increments after a caught exception, in a separate transaction. The `errorMessage` field carries the most recent failure reason.
+- Default `max_attempts` is 3, configurable via `nullinvoice.queue.max-attempts` (see [Configuration](CONFIGURATION.md#async-queue)).
+
+### Polling Recommendations
+
+- The worker polls every 2 seconds by default. A typical request completes within 2–4 seconds end-to-end.
+- Clients should poll with a backoff - e.g. every 2 seconds for the first 30 seconds, then less frequently.
+- The status endpoint is cheap (single indexed lookup); no rate-limit concerns under normal load.
+
 ## Parties API
 
 **Authentication required** - Include Bearer token in `Authorization` header.

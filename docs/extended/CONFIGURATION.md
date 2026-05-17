@@ -23,6 +23,7 @@ An example configuration file is provided at `.env.example`. Copy this to `.env`
 |----------|---------|-------------|
 | `APP_PORT` | 8080 | Application port |
 | `DB_PORT` | 3306 | Database port |
+| `QUEUE_ENABLED` | `true` | Master switch for the async invoice generation worker. Set to `false` to disable the background poller. See [Async Queue](#async-queue). |
 
 ## Timezone Configuration
 
@@ -167,7 +168,27 @@ springdoc:
     path: /openapi
   swagger-ui:
     path: /swagger
+
+nullinvoice:
+  queue:
+    enabled: ${QUEUE_ENABLED:true}
+    poll-interval-ms: 2000
+    batch-size: 10
+    max-attempts: 3
 ```
+
+### Async Queue
+
+The `nullinvoice.queue.*` block controls the background worker that powers the async invoice generation endpoints (`/api/v1/invoice-requests`). See the [API Reference](API.md#async-invoice-generation-queue) for endpoint documentation.
+
+| Property | Env var | Default | Description |
+|----------|---------|---------|-------------|
+| `nullinvoice.queue.enabled` | `QUEUE_ENABLED` | `true` | Master switch. When `false`, the worker bean is not created - no background polling, no scheduled tasks. The submit endpoint still accepts requests but they will sit at `PENDING` forever until the worker is enabled. |
+| `nullinvoice.queue.poll-interval-ms` | - | `2000` | How often (in milliseconds) the worker checks for `PENDING` rows. The next poll only fires after the previous batch finishes, so this is a *minimum* gap, not a strict interval. |
+| `nullinvoice.queue.batch-size` | - | `10` | Maximum number of queue rows fetched per poll cycle. Each row is processed in its own transaction. |
+| `nullinvoice.queue.max-attempts` | - | `3` | Default cap on retries before a queue row is marked `FAILED`. The actual cap per row is stored on the row at submit time, so changing this property only affects newly submitted requests. |
+
+**Disabling the queue.** Set `nullinvoice.queue.enabled=false` (or omit the property) to fully disable the worker. The async endpoints remain available structurally but `PENDING` requests will accumulate without being processed. Use this if you only want the synchronous generation path.
 
 ### Customization
 

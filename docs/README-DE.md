@@ -85,6 +85,13 @@ Unternehmen nutzen nullInvoice für die Rechnungserstellung, nachdem Verkäufe a
 - PDF direkt mit Metadaten in den Headern für sofortige Zustellung (`response_type: pdf`)
 - PDF später abrufen über `/api/v1/invoices/{invoiceNumber}/pdf`
 
+**Asynchrone Generierungs-Warteschlange**
+
+- Alternativer Pfad für Integrationen, die nicht synchron auf die Generierung warten möchten
+- Die Anfrage wird in eine Warteschlange geschrieben, ein Hintergrund-Worker erzeugt die Rechnung, Clients fragen den Status per Polling ab
+- Gleiche Nummerierungs-Garantien wie der synchrone Pfad (gemeinsame Lieferanten-Sperre)
+- Der Worker lässt sich über `QUEUE_ENABLED=false` deaktivieren (Standard `true`)
+
 **OpenAPI-Dokumentation**
 
 - Interaktive API-Dokumentation unter `/swagger`
@@ -638,6 +645,80 @@ curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
      http://localhost:8080/api/v1/invoices/INV-000001/pdf \
      -o invoice.pdf
 ```
+
+### Asynchrone Rechnungserstellungs-Warteschlange
+
+Alternative zu `POST /api/v1/invoices/generate` für Aufrufer, die nicht synchron auf die Generierung warten möchten. Die Anfrage wird in einer Warteschlange persistiert, ein Hintergrund-Worker erzeugt die Rechnung, und Clients fragen den Status per Polling ab.
+
+Beide Pfade durchlaufen dieselbe Lieferanten-Zeilensperre, sodass Rechnungsnummern über den synchronen und asynchronen Pfad hinweg fortlaufend bleiben.
+
+#### Generierungsanfrage einreichen
+
+`POST /api/v1/invoice-requests`
+
+**Authentifizierung erforderlich** - Bearer-Token im `Authorization`-Header angeben.
+
+Der Request-Body ist identisch mit `POST /api/v1/invoices/generate`. Das Feld `response_type` wird ignoriert - asynchrone Anfragen persistieren nur die Warteschlangenzeile; nach Abschluss wird die Rechnung über die Standard-Abrufendpunkte mit der `invoiceNumber` aus der Statusantwort geladen.
+
+```bash
+curl -X POST http://localhost:8080/api/v1/invoice-requests \
+  -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "supplier_id": 1,
+  "client": { "id": 42 },
+  "items": [
+    { "description": "Consulting", "quantity": 1, "unit_price": 1000, "tax_rate": 0.2 }
+  ]
+}'
+```
+
+Antwort (201 Created):
+
+```json
+{
+  "requestId": 42,
+  "status": "PENDING",
+  "message": "invoice generation request queued",
+  "createdAt": "2026-05-17T10:00:00"
+}
+```
+
+#### Status abfragen
+
+`GET /api/v1/invoice-requests/{requestId}`
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     http://localhost:8080/api/v1/invoice-requests/42
+```
+
+Antwort bei `COMPLETED`:
+
+```json
+{
+  "requestId": 42,
+  "status": "COMPLETED",
+  "invoiceId": 107,
+  "invoiceNumber": "INV-000042",
+  "attempts": 1,
+  "createdAt": "2026-05-17T10:00:00",
+  "completedAt": "2026-05-17T10:00:02"
+}
+```
+
+#### Statuszyklus
+
+```
+neue Anfrage                      ->  PENDING
+Worker erfolgreich                ->  COMPLETED
+Worker wirft Fehler               ->  PENDING (wird erneut versucht)
+attempts >= max_attempts          ->  FAILED  (terminal)
+```
+
+`PENDING` ist der einzige wiederholbare Status. Abstürze während der Verarbeitung werden vollständig zurückgerollt und zählen nicht zum Wiederholungsbudget. Nach `COMPLETED` die Rechnung über `GET /api/v1/invoices/{invoiceNumber}` (JSON) oder `/api/v1/invoices/{invoiceNumber}/pdf` (PDF) abrufen.
+
+Der Worker lässt sich über die Umgebungsvariable `QUEUE_ENABLED=false` deaktivieren.
 
 ### Parteien
 

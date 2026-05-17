@@ -84,6 +84,13 @@
 - Директно връщане на PDF с метаданни в заглавките за незабавна доставка (`response_type: pdf`)
 - Изтегляне на PDF по-късно чрез `/api/v1/invoices/{invoiceNumber}/pdf`
 
+**Асинхронна опашка за генериране**
+
+- Алтернативен път за интеграции, които не искат да изчакват синхронно генериране
+- Заявката се записва в опашка, фонов работник я обработва, клиентът проверява статуса чрез poll
+- Същите гаранции за номерация на фактурите като синхронния път (общо заключване на доставчика)
+- Работникът може да се изключи чрез `QUEUE_ENABLED=false` (по подразбиране `true`)
+
 **OpenAPI документация**
 
 - Интерактивна API документация на `/swagger`
@@ -637,6 +644,80 @@ curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
      http://localhost:8080/api/v1/invoices/INV-000001/pdf \
      -o invoice.pdf
 ```
+
+### Асинхронна опашка за генериране на фактури
+
+Алтернативен път на `POST /api/v1/invoices/generate` за клиенти, които не искат да блокират изчакването за приключване на генерирането. Заявката се записва в опашка, фонов работник генерира фактурата, а клиентите проверяват статуса чрез poll.
+
+И двата пътя преминават през едно и също заключване на доставчика, така че номерата на фактурите остават последователни между синхронен и асинхронен път.
+
+#### Подаване на заявка за генериране
+
+`POST /api/v1/invoice-requests`
+
+**Изисква се автентикация** - включете Bearer токен в `Authorization` header.
+
+Тялото на заявката е идентично с `POST /api/v1/invoices/generate`. Полето `response_type` се игнорира - асинхронните заявки само записват реда в опашката; след завършване извлечете фактурата чрез стандартните endpoint-и за извличане, използвайки `invoiceNumber` от отговора на статуса.
+
+```bash
+curl -X POST http://localhost:8080/api/v1/invoice-requests \
+  -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "supplier_id": 1,
+  "client": { "id": 42 },
+  "items": [
+    { "description": "Consulting", "quantity": 1, "unit_price": 1000, "tax_rate": 0.2 }
+  ]
+}'
+```
+
+Отговор (201 Created):
+
+```json
+{
+  "requestId": 42,
+  "status": "PENDING",
+  "message": "invoice generation request queued",
+  "createdAt": "2026-05-17T10:00:00"
+}
+```
+
+#### Проверка на статуса на заявката
+
+`GET /api/v1/invoice-requests/{requestId}`
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     http://localhost:8080/api/v1/invoice-requests/42
+```
+
+Отговор при `COMPLETED`:
+
+```json
+{
+  "requestId": 42,
+  "status": "COMPLETED",
+  "invoiceId": 107,
+  "invoiceNumber": "INV-000042",
+  "attempts": 1,
+  "createdAt": "2026-05-17T10:00:00",
+  "completedAt": "2026-05-17T10:00:02"
+}
+```
+
+#### Жизнен цикъл на статусите
+
+```
+нова заявка                       ->  PENDING
+работникът успешно я обработва     ->  COMPLETED
+работникът хвърля грешка           ->  PENDING (ще опита отново)
+attempts >= max_attempts           ->  FAILED  (терминално)
+```
+
+`PENDING` е единственото състояние, което се обработва отново. Сривовете по време на обработката се отказват напълно и не консумират от бюджета за повторни опити. След `COMPLETED` извлечете фактурата с `GET /api/v1/invoices/{invoiceNumber}` (JSON) или `/api/v1/invoices/{invoiceNumber}/pdf` (PDF).
+
+Работникът може да се изключи чрез променливата на средата `QUEUE_ENABLED=false`.
 
 ### Страни
 

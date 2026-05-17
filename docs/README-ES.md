@@ -86,6 +86,13 @@ Las empresas usan nullInvoice para la generación de facturas después de finali
 - Devuelve PDF directamente con metadatos en los encabezados para entrega inmediata (`response_type: pdf`)
 - Recupere PDFs más tarde en `/api/v1/invoices/{invoiceNumber}/pdf`
 
+**Cola asíncrona de generación**
+
+- Ruta alternativa para integraciones que no quieren esperar la generación de forma síncrona
+- La solicitud se persiste en una cola, un worker en segundo plano genera la factura y los clientes consultan el estado mediante polling
+- Mismas garantías de numeración que la ruta síncrona (bloqueo compartido del proveedor)
+- El worker se puede deshabilitar con `QUEUE_ENABLED=false` (predeterminado `true`)
+
 **Documentación OpenAPI**
 
 - Documentación API interactiva en `/swagger`
@@ -639,6 +646,80 @@ curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
      http://localhost:8080/api/v1/invoices/INV-000001/pdf \
      -o invoice.pdf
 ```
+
+### Cola asíncrona de generación de facturas
+
+Ruta alternativa a `POST /api/v1/invoices/generate` para clientes que no quieren bloquearse esperando la generación síncrona. La solicitud se persiste en una cola, un worker en segundo plano genera la factura y los clientes consultan el estado mediante polling.
+
+Ambas rutas pasan por el mismo bloqueo de la fila del proveedor, por lo que los números de factura permanecen secuenciales entre la ruta síncrona y la asíncrona.
+
+#### Enviar una solicitud de generación
+
+`POST /api/v1/invoice-requests`
+
+**Autenticación requerida** - incluya el Bearer token en el encabezado `Authorization`.
+
+El cuerpo de la solicitud es idéntico al de `POST /api/v1/invoices/generate`. El campo `response_type` se ignora - las solicitudes asíncronas solo persisten la fila de la cola; una vez completada, recupere la factura usando los endpoints estándar con el `invoiceNumber` devuelto en la respuesta de estado.
+
+```bash
+curl -X POST http://localhost:8080/api/v1/invoice-requests \
+  -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "supplier_id": 1,
+  "client": { "id": 42 },
+  "items": [
+    { "description": "Consulting", "quantity": 1, "unit_price": 1000, "tax_rate": 0.2 }
+  ]
+}'
+```
+
+Respuesta (201 Created):
+
+```json
+{
+  "requestId": 42,
+  "status": "PENDING",
+  "message": "invoice generation request queued",
+  "createdAt": "2026-05-17T10:00:00"
+}
+```
+
+#### Consultar el estado de la solicitud
+
+`GET /api/v1/invoice-requests/{requestId}`
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     http://localhost:8080/api/v1/invoice-requests/42
+```
+
+Respuesta cuando está `COMPLETED`:
+
+```json
+{
+  "requestId": 42,
+  "status": "COMPLETED",
+  "invoiceId": 107,
+  "invoiceNumber": "INV-000042",
+  "attempts": 1,
+  "createdAt": "2026-05-17T10:00:00",
+  "completedAt": "2026-05-17T10:00:02"
+}
+```
+
+#### Ciclo de vida de los estados
+
+```
+nueva solicitud                  ->  PENDING
+worker exitoso                   ->  COMPLETED
+worker lanza un error            ->  PENDING (reintentará)
+attempts >= max_attempts         ->  FAILED  (terminal)
+```
+
+`PENDING` es el único estado reintenable. Las caídas durante el procesamiento se revierten por completo y no cuentan contra el presupuesto de reintentos. Después de `COMPLETED`, recupere la factura con `GET /api/v1/invoices/{invoiceNumber}` (JSON) o `/api/v1/invoices/{invoiceNumber}/pdf` (PDF).
+
+El worker se puede deshabilitar mediante la variable de entorno `QUEUE_ENABLED=false`.
 
 ### Partes
 
