@@ -52,11 +52,20 @@ public class InvoiceService {
 
     @Transactional
     public Invoices generateInvoice(GenerateInvoiceRequest request) {
-        return generateInvoice(request, false);
+        return generateInternal(request, false, null);
+    }
+
+    @Transactional
+    public Invoices generateInvoice(GenerateInvoiceRequest request, Long requestId) {
+        return generateInternal(request, false, requestId);
     }
 
     @Transactional
     public Invoices generateInvoice(GenerateInvoiceRequest request, boolean markUnpaid) {
+        return generateInternal(request, markUnpaid, null);
+    }
+
+    private Invoices generateInternal(GenerateInvoiceRequest request, boolean markUnpaid, Long requestId) {
         Invoices invoice = mapper.toEntity(request);
         LocalDate issueDate = request.getIssueDate() != null ? request.getIssueDate() : LocalDate.now(ZoneOffset.UTC);
         invoice.setIssueDate(toDate(issueDate));
@@ -101,6 +110,8 @@ public class InvoiceService {
         InvoiceTemplates template = invoiceTemplateService.resolveTemplate(null, supplier);
         invoice.setTemplateId(template);
         invoice.setInvoiceHtml(templateService.renderInvoice(invoice, template.getHtml(), supplierLocale));
+
+        invoice.setRequestId(requestId);
 
         Date now = new Date();
         invoice.setCreatedAt(now);

@@ -22,3 +22,10 @@ springdoc:
     path: /openapi
   swagger-ui:
     path: /swagger
+
+nullinvoice:
+  queue:
+    enabled: ${QUEUE_ENABLED:true}
+    poll-interval-ms: 2000
+    batch-size: 10
+    max-attempts: 3

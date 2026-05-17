@@ -12,4 +12,5 @@ services:
       - DB_USER=${DB_USER:-nullinvoice}
       - DB_PASSWORD=${DB_PASSWORD:-}
       - DB_NAME=${DB_NAME:-nullinvoice}
+      - QUEUE_ENABLED=${QUEUE_ENABLED:-true}
     restart: unless-stopped

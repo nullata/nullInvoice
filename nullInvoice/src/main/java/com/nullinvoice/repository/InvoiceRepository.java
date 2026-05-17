@@ -26,6 +26,8 @@ public interface InvoiceRepository extends JpaRepository<Invoices, Long> {
     @EntityGraph(attributePaths = {"invoiceItemsCollection", "templateId"})
     Optional<Invoices> findWithItemsByInvoiceNumberAndSupplierPartyId_Id(String invoiceNumber, Long supplierId);
 
+    Optional<Invoices> findByRequestId(Long requestId);
+
     Page<Invoices> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     Page<Invoices> findAllByInvoiceNumberContainingIgnoreCase(String invoiceNumber, Pageable pageable);

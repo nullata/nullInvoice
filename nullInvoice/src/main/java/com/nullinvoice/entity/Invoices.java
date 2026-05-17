@@ -235,6 +235,8 @@ public class Invoices implements Serializable {
     @JoinColumn(name = "supplier_party_id", referencedColumnName = "id")
     @ManyToOne
     private Parties supplierPartyId;
+    @Column(name = "request_id")
+    private Long requestId;
 
     public Invoices() {
     }
@@ -593,6 +595,14 @@ public class Invoices implements Serializable {
 
     public void setSupplierPartyId(Parties supplierPartyId) {
         this.supplierPartyId = supplierPartyId;
+    }
+
+    public Long getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(Long requestId) {
+        this.requestId = requestId;
     }
 
     @Override

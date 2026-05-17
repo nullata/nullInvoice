@@ -6,6 +6,7 @@ package com.nullinvoice.controller;
 import com.nullinvoice.dto.ErrorResponse;
 import com.nullinvoice.error.ClientNotFoundException;
 import com.nullinvoice.error.InvoiceNotFoundException;
+import com.nullinvoice.error.InvoiceRequestNotFoundException;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice(basePackageClasses = {
     InvoiceController.class,
     InvoiceUiApiController.class,
+    InvoiceRequestController.class,
     PartyApiController.class,
     HealthController.class
 })
@@ -43,6 +45,11 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(ClientNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleClientNotFound(ClientNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvoiceRequestNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleInvoiceRequestNotFound(InvoiceRequestNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
     }
 

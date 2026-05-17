@@ -66,6 +66,7 @@ Businesses use nullInvoice to handle invoice generation after sales are complete
 - **Document Immutability** - HTML snapshots prevent retroactive changes (financial compliance)
 - **Multi-tenant Ready** - Multiple suppliers with independent settings
 - **Flexible Delivery** - Return JSON metadata or PDF directly
+- **Async Generation Queue** - Optional fire-and-forget path with status polling for high-throughput integrations
 - **OpenAPI Documentation** - Interactive API docs at `/swagger`
 
 ## Quick Start
