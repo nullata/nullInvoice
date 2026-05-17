@@ -29,6 +29,7 @@ services:
       - DB_PASSWORD=changeme
       - DB_NAME=nullinvoice
       - DB_PARAMS=?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Europe/Sofia
+      - QUEUE_ENABLED=true
     depends_on:
       - mariadb
     restart: unless-stopped
@@ -104,6 +105,7 @@ The database schema is managed automatically by Flyway migrations on startup.
 | `DB_PASSWORD` | **Yes** | - | Database password |
 | `DB_NAME` | **Yes** | nullinvoice | Database name |
 | `DB_PARAMS` | **Yes** | - | JDBC connection parameters including `serverTimezone` |
+| `QUEUE_ENABLED` | No | true | Master switch for the async invoice generation worker. Set to `false` to disable the background poller. |
 
 **CRITICAL:** The `TZ` environment variable and `serverTimezone` in `DB_PARAMS` **must match** your database server timezone to ensure correct date/time handling.
 
@@ -140,6 +142,7 @@ volumes:
 - **Customizable HTML templates** with 30+ placeholders
 - **Document immutability** - HTML snapshots prevent retroactive changes
 - **Multi-tenant ready** - multiple suppliers with independent settings
+- **Async generation queue** - optional fire-and-forget path with status polling for high-throughput integrations
 - **OpenAPI documentation** at `/swagger` (requires login)
 - **Session + API key authentication** for UI and API access
 
