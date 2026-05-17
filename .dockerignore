@@ -6,6 +6,8 @@
 .idea
 .vscode
 *.iml
+nb-configuration.xml
+nbactions.xml
 
 # Build output
 nullInvoice/target
