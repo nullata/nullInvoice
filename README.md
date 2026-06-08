@@ -1,3 +1,5 @@
+![nullInvoice logo](docs/nullinvoice.png)
+
 # <img src="nullInvoice/src/main/resources/static/images/logo.svg" alt="logo" width="24"> nullInvoice
 
 **nullInvoice** is a Spring Boot microservice for **automated invoice generation and management** with **fully customizable HTML templates**, designed for integration with webstores and SaaS platforms.
