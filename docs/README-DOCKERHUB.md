@@ -1,8 +1,7 @@
-<p align="center">
-<img src="https://raw.githubusercontent.com/nullata/containers/refs/heads/main/images/logo.png" alt="Logo" width="96">
-</p>
 
-# nullInvoice - Automated Invoice Generation
+![nullInvoice logo](https://raw.githubusercontent.com/nullata/nullInvoice/refs/heads/main/docs/nullinvoice.png)
+
+# <img src="https://raw.githubusercontent.com/nullata/containers/refs/heads/main/images/logo.png" alt="nullata-logo" width="24"> nullInvoice - Automated Invoice Generation
 
 **nullInvoice** is a Spring Boot microservice for automated invoice generation and management with fully customizable HTML templates, designed for integration with webstores and SaaS platforms.
 
