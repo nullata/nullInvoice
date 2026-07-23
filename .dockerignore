@@ -8,6 +8,8 @@
 *.iml
 nb-configuration.xml
 nbactions.xml
+persistence.xml
+tailwindcss-linux-x64
 
 # Build output
 nullInvoice/target
@@ -20,4 +22,9 @@ docker-compose.yml
 # Misc
 *.md
 *.txt
+*.png
+*.jpg
+
 .env*
+
+.vessel_*

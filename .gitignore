@@ -28,3 +28,5 @@ replay_pid*
 persistence.xml
 tailwindcss-linux-x64
 .env
+
+.vessel_*
