@@ -200,7 +200,7 @@ Detailed guides organized by topic:
 
 ## Internationalization
 
-**Supported UI Languages:** English, Bulgarian, German, Spanish, Italian, Russian
+**Supported UI Languages:** English, Bulgarian, German, Spanish, Italian, Russian, Turkish
 
 **README Translations:**
 - [Bulgarian](docs/README-BG.md)
@@ -208,8 +208,9 @@ Detailed guides organized by topic:
 - [Spanish](docs/README-ES.md)
 - [Italian](docs/README-IT.md)
 - [Russian](docs/README-RU.md)
+- [Turkish](docs/README-TR.md)
 
-**Invoice Templates:** Example templates available in [`templates/`](templates/) directory for all 6 languages
+**Invoice Templates:** Example templates available in [`templates/`](templates/) directory for all 7 languages
 
 ## License
 

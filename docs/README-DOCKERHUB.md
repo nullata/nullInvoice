@@ -1,4 +1,3 @@
-
 ![nullInvoice logo](https://raw.githubusercontent.com/nullata/nullInvoice/refs/heads/main/docs/nullinvoice.png)
 
 # <img src="https://raw.githubusercontent.com/nullata/containers/refs/heads/main/images/logo.png" alt="nullata-logo" width="24"> nullInvoice - Automated Invoice Generation

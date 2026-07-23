@@ -171,6 +171,7 @@ The application UI is fully internationalized with message bundles:
 - `messages_es.properties` - Spanish
 - `messages_it.properties` - Italian
 - `messages_ru.properties` - Russian
+- `messages_tr.properties` - Turkish
 
 ## Contributing
 
