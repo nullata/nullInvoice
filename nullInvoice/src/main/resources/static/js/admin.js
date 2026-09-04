@@ -90,7 +90,7 @@
         const input = document.getElementById('apiKeyCode');
         const btn = document.getElementById('copyApiKeyBtn');
 
-        navigator.clipboard.writeText(input.value).then(() => {
+        const onCopied = function () {
             // change to checkmark
             btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
             btn.classList.add('bg-emerald-500/20');
@@ -100,10 +100,29 @@
                 btn.innerHTML = '<i class="fa-solid fa-copy"></i>';
                 btn.classList.remove('bg-emerald-500/20');
             }, 2000);
-        }).catch(err => {
-            // console.error('Failed to copy:', err);
+        };
+
+        const onFailed = function () {
+            // console.error('Failed to copy to clipboard');
             alert('Failed to copy to clipboard');
-        });
+        };
+
+        // navigator.clipboard only exists in secure contexts (HTTPS or localhost);
+        // fall back to the legacy execCommand path when served over plain HTTP
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(input.value).then(onCopied).catch(onFailed);
+        } else {
+            try {
+                input.select();
+                input.setSelectionRange(0, input.value.length);
+                document.execCommand('copy') ? onCopied() : onFailed();
+            } catch (err) {
+                onFailed();
+            } finally {
+                // deselect so the field doesn't stay highlighted
+                input.setSelectionRange(0, 0);
+            }
+        }
     };
 
     /**
