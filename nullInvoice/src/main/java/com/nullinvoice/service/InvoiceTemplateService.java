@@ -38,14 +38,35 @@ public class InvoiceTemplateService {
 
     @Transactional(readOnly = true)
     public InvoiceTemplates resolveTemplate(String name, Parties supplier) {
-        if (name == null || name.isBlank()) {
-            if (supplier != null && supplier.getDefaultTemplateId() != null) {
-                return supplier.getDefaultTemplateId();
-            }
-            return getDefaultTemplate();
+        return resolveTemplate(null, name, supplier);
+    }
+
+    /**
+     * Resolves the effective template using request-provided id/name with fallback.
+     * Precedence: id (throws if not found) → name (throws if not found)
+     * → supplier's default template → global default template.
+     *
+     * @param id       optional explicit template id; wins over name if set
+     * @param name     optional explicit template name (case-insensitive); used if id is null
+     * @param supplier optional supplier whose defaultTemplateId is used when id/name are absent
+     * @return the resolved template (never null)
+     * @throws IllegalArgumentException if id or name is provided but no matching template exists
+     * @throws ConfigurationException   if fallback is reached and no global default is configured
+     */
+    @Transactional(readOnly = true)
+    public InvoiceTemplates resolveTemplate(Long id, String name, Parties supplier) {
+        if (id != null) {
+            return repository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("template not found: id=" + id));
         }
-        return repository.findByNameIgnoreCase(name.trim())
-                .orElseThrow(() -> new IllegalArgumentException("template not found: " + name));
+        if (name != null && !name.isBlank()) {
+            return repository.findByNameIgnoreCase(name.trim())
+                    .orElseThrow(() -> new IllegalArgumentException("template not found: " + name));
+        }
+        if (supplier != null && supplier.getDefaultTemplateId() != null) {
+            return supplier.getDefaultTemplateId();
+        }
+        return getDefaultTemplate();
     }
 
     @Transactional(readOnly = true)

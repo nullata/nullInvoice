@@ -6,9 +6,11 @@ package com.nullinvoice.service;
 import com.nullinvoice.dto.PartyDto;
 import com.nullinvoice.dto.TemplateIndicator;
 import com.nullinvoice.entity.InvoiceTemplates;
+import com.nullinvoice.entity.Parties;
 import com.nullinvoice.repository.InvoiceTemplateRepository;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -172,6 +174,82 @@ class InvoiceTemplateServiceTest {
         InvoiceTemplates result = service.resolveEffectiveTemplate(supplier);
 
         assertThat(result).isNull();
+    }
+
+    // === resolveTemplate(id, name, supplier) ===
+
+    @Test
+    void resolveTemplate_idProvided_returnsTemplateById() {
+        // explicit id wins over everything else
+        InvoiceTemplates byId = createTemplate(7L, "By Id");
+        when(repository.findById(7L)).thenReturn(Optional.of(byId));
+
+        InvoiceTemplates result = service.resolveTemplate(7L, "ignored", supplierWithDefault(1L));
+
+        assertThat(result.getName()).isEqualTo("By Id");
+    }
+
+    @Test
+    void resolveTemplate_idNotFound_throws() {
+        // unknown id -> IllegalArgumentException (mapped to 400 by ApiExceptionHandler)
+        when(repository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.resolveTemplate(999L, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("template not found: id=999");
+    }
+
+    @Test
+    void resolveTemplate_nameProvided_returnsTemplateByName() {
+        // name lookup is case-insensitive and wins over supplier default when id is absent
+        InvoiceTemplates byName = createTemplate(3L, "Modern EN");
+        when(repository.findByNameIgnoreCase("Modern EN")).thenReturn(Optional.of(byName));
+
+        InvoiceTemplates result = service.resolveTemplate(null, "Modern EN", supplierWithDefault(1L));
+
+        assertThat(result.getName()).isEqualTo("Modern EN");
+    }
+
+    @Test
+    void resolveTemplate_nameNotFound_throws() {
+        // unknown name -> IllegalArgumentException (mapped to 400 by ApiExceptionHandler)
+        when(repository.findByNameIgnoreCase("missing")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.resolveTemplate(null, "missing", null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("template not found: missing");
+    }
+
+    @Test
+    void resolveTemplate_noIdOrName_fallsBackToSupplierDefault() {
+        // neither id nor name -> supplier's default template
+        Parties supplier = new Parties();
+        InvoiceTemplates supplierDefault = createTemplate(5L, "Supplier Default");
+        supplier.setDefaultTemplateId(supplierDefault);
+
+        InvoiceTemplates result = service.resolveTemplate(null, "  ", supplier);
+
+        assertThat(result.getName()).isEqualTo("Supplier Default");
+    }
+
+    @Test
+    void resolveTemplate_noIdOrNameOrSupplierDefault_fallsBackToGlobal() {
+        // no id, no name, no supplier default -> global default
+        InvoiceTemplates global = createTemplate(9L, "Global");
+        when(repository.findFirstByIsDefaultTrue()).thenReturn(Optional.of(global));
+
+        InvoiceTemplates result = service.resolveTemplate(null, null, new Parties());
+
+        assertThat(result.getName()).isEqualTo("Global");
+    }
+
+    private Parties supplierWithDefault(Long templateId) {
+        Parties supplier = new Parties();
+        InvoiceTemplates def = new InvoiceTemplates();
+        def.setId(templateId);
+        def.setName("Ignored Supplier Default");
+        supplier.setDefaultTemplateId(def);
+        return supplier;
     }
 
     private InvoiceTemplates createTemplate(Long id, String name) {

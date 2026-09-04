@@ -131,6 +131,50 @@ class InvoiceApiControllerTest {
     }
 
     @Test
+    void generateInvoice_withTemplateNameAlias_selectsThatTemplate() throws Exception {
+        // seed a default template (should be ignored) and an alt template we want the API to pick
+        invoiceTemplateService.saveTemplate(buildTemplateForm("Default API Template", true));
+        invoiceTemplateService.saveTemplate(buildTemplateForm("Alt Template", false));
+        Parties supplier = partyProfileService.saveSupplierProfile(null, buildSupplierDto("API Supplier"));
+
+        // send raw JSON to exercise the snake_case @JsonAlias("template_name")
+        String json = "{"
+                + "\"supplier_id\":" + supplier.getId() + ","
+                + "\"currency_code\":\"EUR\","
+                + "\"template_name\":\"Alt Template\","
+                + "\"client\":{\"name\":\"API Client\",\"addressLine1\":\"1 Client Way\",\"city\":\"Sofia\",\"country\":\"BG\"},"
+                + "\"items\":[{\"description\":\"Consulting\",\"quantity\":1,\"unitPrice\":100.00,\"taxRate\":0.20}]"
+                + "}";
+
+        mockMvc.perform(post("/api/v1/invoices/generate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isOk());
+
+        // confirm the persisted invoice used the alt template, not the supplier/global default
+        List<Invoices> invoices = invoiceRepository.findAll();
+        assertThat(invoices).hasSize(1);
+        assertThat(invoices.get(0).getTemplateId().getName()).isEqualTo("Alt Template");
+    }
+
+    @Test
+    void generateInvoice_withUnknownTemplateName_returnsBadRequest() throws Exception {
+        // seed a default template so only the template lookup fails
+        invoiceTemplateService.saveTemplate(buildTemplateForm("Default API Template", true));
+        Parties supplier = partyProfileService.saveSupplierProfile(null, buildSupplierDto("API Supplier"));
+
+        GenerateInvoiceRequest request = buildInvoiceRequest(supplier.getId(), "EUR");
+        request.setTemplateName("Does Not Exist");
+
+        // an unknown template name should surface as a 400 with the resolver's message
+        mockMvc.perform(post("/api/v1/invoices/generate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("template not found: Does Not Exist"));
+    }
+
+    @Test
     void listInvoices_withStatusFilter_returnsOnlyUnpaid() throws Exception {
         // seed issued and unpaid invoices so the status filter can be verified
         invoiceTemplateService.saveTemplate(buildTemplateForm("Default API Template", true));

@@ -5,8 +5,12 @@ package com.nullinvoice.service;
 
 import com.nullinvoice.config.InvoiceLocale;
 import com.nullinvoice.config.SupplierLocaleFactory;
+import com.nullinvoice.dto.GenerateInvoiceRequest;
+import com.nullinvoice.dto.InvoicePartyDto;
 import com.nullinvoice.entity.InvoiceItems;
+import com.nullinvoice.entity.InvoiceTemplates;
 import com.nullinvoice.entity.Invoices;
+import com.nullinvoice.entity.Parties;
 import com.nullinvoice.repository.InvoiceRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -17,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -220,6 +225,48 @@ class InvoiceServiceTest {
 
         assertThat(updated.getStatus()).isEqualTo(InvoiceService.STATUS_ISSUED);
         verify(invoiceRepository, never()).save(any());
+    }
+
+    // === generateInvoice template selection wiring ===
+    @Test
+    void generateInvoice_passesRequestTemplateIdAndNameToResolver() {
+        // Verifies InvoiceService forwards the request's templateId/templateName to
+        // InvoiceTemplateService.resolveTemplate(id, name, supplier). Guards against silent
+        // wiring regressions (e.g. someone reverting to resolveTemplate(null, supplier)).
+        GenerateInvoiceRequest request = new GenerateInvoiceRequest();
+        request.setSupplierId(1L);
+        request.setCurrencyCode("EUR");
+        request.setTemplateId(77L);
+        request.setTemplateName("named");
+        request.setClient(InvoicePartyDto.builder().id(9L).build());
+        request.setItems(List.of()); // items collection is on the entity, not the request, for this path
+
+        Parties supplier = new Parties();
+        supplier.setId(1L);
+        Parties client = new Parties();
+        client.setId(9L);
+        InvoiceTemplates resolved = new InvoiceTemplates();
+        resolved.setName("resolved");
+        resolved.setHtml("<html/>");
+
+        // stub just enough of generateInternal to reach the resolveTemplate call and the save
+        when(mapper.toEntity(request)).thenReturn(new Invoices());
+        when(partyProfileService.lockSupplierForUpdate(1L)).thenReturn(supplier);
+        when(partyProfileService.findClientEntityById(9L)).thenReturn(Optional.of(client));
+        when(supplierLocaleFactory.createFromSupplier(supplier)).thenReturn(defaultLocale);
+        when(defaultLocale.getCode()).thenReturn("en_US");
+        when(supplierLocaleFactory.getInvoicePrefix(supplier)).thenReturn("INV");
+        when(supplierLocaleFactory.getInvoiceNumberDigits(supplier)).thenReturn(5);
+        when(supplierLocaleFactory.getInvoiceStartNumber(supplier)).thenReturn(1L);
+        when(invoiceRepository.findMaxInvoiceNumberIntBySupplierId(1L)).thenReturn(0L);
+        when(invoiceTemplateService.resolveTemplate(77L, "named", supplier)).thenReturn(resolved);
+        when(templateService.renderInvoice(any(Invoices.class), eq("<html/>"), eq(defaultLocale))).thenReturn("<html>rendered</html>");
+        when(invoiceRepository.save(any(Invoices.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        invoiceService.generateInvoice(request);
+
+        // the resolver must receive the exact id/name/supplier triple, not (null, supplier)
+        verify(invoiceTemplateService).resolveTemplate(77L, "named", supplier);
     }
 
     private InvoiceItems createItemWithDiscount(BigDecimal discount) {

@@ -107,7 +107,8 @@ public class InvoiceService {
         invoice.setInvoiceNumberInt(nextNumber);
         invoice.setInvoiceNumber(formatInvoiceNumber(supplierPrefix, nextNumber, numberDigits));
 
-        InvoiceTemplates template = invoiceTemplateService.resolveTemplate(null, supplier);
+        InvoiceTemplates template = invoiceTemplateService.resolveTemplate(
+                request.getTemplateId(), request.getTemplateName(), supplier);
         invoice.setTemplateId(template);
         invoice.setInvoiceHtml(templateService.renderInvoice(invoice, template.getHtml(), supplierLocale));
 

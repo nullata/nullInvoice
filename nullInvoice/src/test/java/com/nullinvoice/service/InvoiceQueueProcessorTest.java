@@ -4,6 +4,7 @@
 package com.nullinvoice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nullinvoice.dto.GenerateInvoiceRequest;
 import com.nullinvoice.entity.InvoiceRequest;
 import com.nullinvoice.entity.Invoices;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -180,6 +182,38 @@ class InvoiceQueueProcessorTest {
         processor.recordFailure(99L, new RuntimeException("doesn't matter"));
 
         verify(requestRepository, times(1)).findById(99L);
+    }
+
+    @Test
+    void processOne_deserializesAndPropagatesTemplateIdAndName() throws Exception {
+        // proves templateId + templateName survive the queue's Jackson round-trip and reach
+        // InvoiceService.generateInvoice with the same values. Uses a real ObjectMapper so
+        // any future field/alias change on the DTO would break this test.
+        ObjectMapper realMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        InvoiceQueueProcessor realMapperProcessor = new InvoiceQueueProcessor(
+                requestRepository, invoiceRepository, invoiceService, realMapper);
+
+        // stored payload as a real API caller would send it (snake_case aliases + camelCase mix)
+        String payloadJson = "{"
+                + "\"supplier_id\":1,"
+                + "\"template_id\":42,"
+                + "\"templateName\":\"Queue Template\""
+                + "}";
+
+        InvoiceRequest req = newPendingRequest(50L, payloadJson);
+        when(requestRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(req));
+        when(invoiceRepository.findByRequestId(50L)).thenReturn(Optional.empty());
+        Invoices saved = new Invoices();
+        saved.setId(200L);
+        when(invoiceService.generateInvoice(any(GenerateInvoiceRequest.class), eq(50L))).thenReturn(saved);
+
+        realMapperProcessor.processOne(50L);
+
+        ArgumentCaptor<GenerateInvoiceRequest> captor = ArgumentCaptor.forClass(GenerateInvoiceRequest.class);
+        verify(invoiceService).generateInvoice(captor.capture(), eq(50L));
+        assertThat(captor.getValue().getTemplateId()).isEqualTo(42L);
+        assertThat(captor.getValue().getTemplateName()).isEqualTo("Queue Template");
+        assertThat(captor.getValue().getSupplierId()).isEqualTo(1L);
     }
 
     private InvoiceRequest newPendingRequest(Long id, String payload) {

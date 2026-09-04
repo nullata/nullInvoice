@@ -35,6 +35,16 @@ public class GenerateInvoiceRequest {
     @Schema(description = "Supplier party ID", required = true, example = "1")
     private Long supplierId;
 
+    @JsonAlias("template_id")
+    @Schema(description = "Override template by id. Takes precedence over templateName. If neither is provided, falls back to the supplier's default template, then the global default.",
+            example = "3")
+    private Long templateId;
+
+    @JsonAlias("template_name")
+    @Schema(description = "Override template by name (case-insensitive). Ignored if templateId is set. If neither is provided, falls back to the supplier's default template, then the global default.",
+            example = "Modern EN")
+    private String templateName;
+
     @NotNull(message = "client is required")
     @Valid
     @Schema(description = "Client information - provide id to reference existing client, or fill in fields for new client")
