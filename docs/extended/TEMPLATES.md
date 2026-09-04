@@ -5,8 +5,13 @@ Complete guide for creating and customizing invoice templates in nullInvoice.
 ## Template Overview
 
 - Templates live in `invoice_templates` and must include HTML content.
-- Invoice generation requires an effective default template (supplier-specific or global).
+- Invoice generation requires an effective template. Resolution order per invoice (first match wins):
+  1. `template_id` on the API request
+  2. `template_name` on the API request (case-insensitive)
+  3. The supplier's default template
+  4. The global default template
 - Suppliers can override the global default with a supplier-specific template.
+- API callers can override both defaults per invoice using `template_id` / `template_name` on `POST /api/v1/invoices/generate` and `POST /api/v1/invoice-requests` - see [API Reference](API.md#per-request-template-override).
 - Generated invoices store an HTML snapshot for consistent re-rendering.
 - PDFs are rendered from the stored HTML snapshot when available.
 

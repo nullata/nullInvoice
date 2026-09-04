@@ -68,6 +68,7 @@
 ## Temel Özellikler
 
 - **Tamamen Özelleştirilebilir Şablonlar** - Satır içi CSS ve 30'dan fazla yer tutucu içeren HTML şablonları
+- **İstek Başına Şablon Seçimi** - API çağrısı başına varsayılan şablonu `template_id` veya `template_name` ile geçersiz kılın
 - **Doküman Değişmezliği** - HTML anlık görüntüleri (snapshots), geriye dönük değişiklikleri önler (finansal uyumluluk)
 - **Çoklu Kiracıya Uygun (Multi-tenant)** - Bağımsız ayarlara sahip birden fazla tedarikçi
 - **Esnek Teslimat** - JSON üstverisi veya doğrudan PDF döndürme

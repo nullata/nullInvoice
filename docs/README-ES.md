@@ -67,6 +67,7 @@ Las empresas usan nullInvoice para la generación de facturas después de finali
 - Las facturas se basan en plantillas HTML definidas por el usuario con CSS en línea
 - Las plantillas admiten más de 30 marcadores de posición para proveedor, cliente y datos financieros
 - Las plantillas predeterminadas por proveedor permiten branding distinto por unidad de negocio
+- Los clientes de la API pueden sobrescribir la plantilla por factura mediante `template_id` / `template_name`; si no se indican, se aplica la cadena existente: plantilla predeterminada del proveedor → predeterminada global
 
 **Inmutabilidad de documentos**
 
@@ -510,6 +511,7 @@ Si inició sesión en la interfaz web, su sesión se usa automáticamente para l
 - `response_type` admite `number` (predeterminado) o `pdf`.
   - `number`: devuelve JSON solo con metadatos de la factura
   - `pdf`: devuelve el PDF directamente con metadatos en los encabezados de respuesta
+- Los campos opcionales `template_id` / `template_name` seleccionan la plantilla para esta factura (`template_id` tiene prioridad; `template_name` es insensible a mayúsculas/minúsculas). Si no se indican, se aplica la cadena de fallback existente: plantilla predeterminada del proveedor → predeterminada global. Un id o nombre desconocido devuelve **400 Bad Request** - no hay fallback silencioso. Los mismos campos funcionan en el endpoint asíncrono `POST /api/v1/invoice-requests`.
 - El estado siempre es `issued` para facturas generadas por la API.
 
 Ejemplo de solicitud (cliente existente por id):
@@ -659,7 +661,7 @@ Ambas rutas pasan por el mismo bloqueo de la fila del proveedor, por lo que los 
 
 **Autenticación requerida** - incluya el Bearer token en el encabezado `Authorization`.
 
-El cuerpo de la solicitud es idéntico al de `POST /api/v1/invoices/generate`. El campo `response_type` se ignora - las solicitudes asíncronas solo persisten la fila de la cola; una vez completada, recupere la factura usando los endpoints estándar con el `invoiceNumber` devuelto en la respuesta de estado.
+El cuerpo de la solicitud es idéntico al de `POST /api/v1/invoices/generate`, incluyendo el override opcional de plantilla mediante `template_id` / `template_name` - el worker de la cola aplica la misma resolución al renderizar. El campo `response_type` se ignora - las solicitudes asíncronas solo persisten la fila de la cola; una vez completada, recupere la factura usando los endpoints estándar con el `invoiceNumber` devuelto en la respuesta de estado.
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/invoice-requests \

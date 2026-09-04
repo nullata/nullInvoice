@@ -65,6 +65,7 @@ Businesses use nullInvoice to handle invoice generation after sales are complete
 ## Key Features
 
 - **Fully Customizable Templates** - HTML templates with inline CSS and 30+ placeholders
+- **Per-Request Template Selection** - Override the default template per API call via `template_id` or `template_name`
 - **Document Immutability** - HTML snapshots prevent retroactive changes (financial compliance)
 - **Multi-tenant Ready** - Multiple suppliers with independent settings
 - **Flexible Delivery** - Return JSON metadata or PDF directly

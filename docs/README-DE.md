@@ -66,6 +66,7 @@ Unternehmen nutzen nullInvoice für die Rechnungserstellung, nachdem Verkäufe a
 - Rechnungen basieren auf benutzerdefinierten HTML-Vorlagen mit Inline-CSS
 - Vorlagen unterstützen 30+ Platzhalter für Lieferanten-, Kunden- und Finanzdaten
 - Standardvorlagen pro Lieferant ermöglichen unterschiedliches Branding je Geschäftseinheit
+- API-Aufrufer können die Vorlage pro Rechnung mit `template_id` / `template_name` überschreiben; ohne Angabe greift die bestehende Reihenfolge: Lieferanten-Standardvorlage → globale Standardvorlage
 
 **Unveränderlichkeit von Dokumenten**
 
@@ -509,6 +510,7 @@ Wenn Sie über die Web-UI eingeloggt sind, wird Ihre Sitzung automatisch für AP
 - `response_type` unterstützt `number` (Standard) oder `pdf`.
   - `number`: gibt JSON nur mit Rechnungsmetadaten zurück
   - `pdf`: liefert das PDF direkt mit Metadaten in den Response-Headern
+- Optionale `template_id` / `template_name` wählen die Vorlage für diese Rechnung aus (`template_id` hat Vorrang; `template_name` ist Groß-/Kleinschreibung-unabhängig). Werden beide weggelassen, greift die bestehende Reihenfolge: Lieferanten-Standardvorlage → globale Standardvorlage. Eine unbekannte ID oder ein unbekannter Name führt zu **400 Bad Request** - es gibt keinen stillen Fallback. Dieselben Felder gelten auch für den asynchronen Endpunkt `POST /api/v1/invoice-requests`.
 - Status ist immer `issued` für API-erstellte Rechnungen.
 
 Beispielanfrage (bestehender Kunde per ID):
@@ -658,7 +660,7 @@ Beide Pfade durchlaufen dieselbe Lieferanten-Zeilensperre, sodass Rechnungsnumme
 
 **Authentifizierung erforderlich** - Bearer-Token im `Authorization`-Header angeben.
 
-Der Request-Body ist identisch mit `POST /api/v1/invoices/generate`. Das Feld `response_type` wird ignoriert - asynchrone Anfragen persistieren nur die Warteschlangenzeile; nach Abschluss wird die Rechnung über die Standard-Abrufendpunkte mit der `invoiceNumber` aus der Statusantwort geladen.
+Der Request-Body ist identisch mit `POST /api/v1/invoices/generate`, einschließlich der optionalen Vorlagen-Auswahl per `template_id` / `template_name` - der Queue-Worker wendet beim Rendern dieselbe Auflösungsreihenfolge an. Das Feld `response_type` wird ignoriert - asynchrone Anfragen persistieren nur die Warteschlangenzeile; nach Abschluss wird die Rechnung über die Standard-Abrufendpunkte mit der `invoiceNumber` aus der Statusantwort geladen.
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/invoice-requests \

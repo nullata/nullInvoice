@@ -66,6 +66,7 @@ Le aziende usano nullInvoice per gestire la generazione delle fatture dopo che l
 - Le fatture si basano su modelli HTML definiti dall'utente con CSS inline
 - I modelli supportano oltre 30 placeholder per dati di fornitore, cliente e finanziari
 - I modelli predefiniti per fornitore consentono branding diverso per unità di business
+- I client API possono sovrascrivere il modello per singola fattura tramite `template_id` / `template_name`; se non indicati, si applica la catena esistente: modello predefinito del fornitore → predefinito globale
 
 **Immutabilità dei documenti**
 
@@ -509,6 +510,7 @@ Se è loggato tramite la UI web, la sua sessione viene usata automaticamente per
 - `response_type` supporta `number` (predefinito) o `pdf`.
   - `number`: restituisce JSON solo con metadati della fattura
   - `pdf`: restituisce il PDF direttamente con metadati negli header di risposta
+- I campi opzionali `template_id` / `template_name` selezionano il template per questa fattura (`template_id` ha la precedenza; `template_name` è case-insensitive). Se nessuno dei due è impostato, si applica la catena di fallback esistente: template predefinito del fornitore → predefinito globale. Un id o nome sconosciuto restituisce **400 Bad Request** - non c'è alcun fallback silenzioso. Gli stessi campi funzionano anche sull'endpoint asincrono `POST /api/v1/invoice-requests`.
 - Lo stato è sempre `issued` per le fatture generate via API.
 
 Esempio di richiesta (cliente esistente per id):
@@ -658,7 +660,7 @@ Entrambi i percorsi passano attraverso lo stesso blocco sulla riga del fornitore
 
 **Autenticazione richiesta** - includa il Bearer token nell'header `Authorization`.
 
-Il corpo della richiesta è identico a `POST /api/v1/invoices/generate`. Il campo `response_type` viene ignorato - le richieste asincrone persistono solo la riga della coda; una volta completata, recuperi la fattura usando gli endpoint standard con il valore `invoiceNumber` restituito nella risposta di stato.
+Il corpo della richiesta è identico a `POST /api/v1/invoices/generate`, incluso l'override opzionale del template tramite `template_id` / `template_name` - il worker della coda applica la stessa risoluzione al momento del render. Il campo `response_type` viene ignorato - le richieste asincrone persistono solo la riga della coda; una volta completata, recuperi la fattura usando gli endpoint standard con il valore `invoiceNumber` restituito nella risposta di stato.
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/invoice-requests \

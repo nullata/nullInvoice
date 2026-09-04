@@ -138,6 +138,7 @@ volumes:
 
 - **REST API** for invoice generation with JSON or PDF response
 - **Customizable HTML templates** with 30+ placeholders
+- **Per-request template selection** - override the default template per API call via `template_id` or `template_name`
 - **Document immutability** - HTML snapshots prevent retroactive changes
 - **Multi-tenant ready** - multiple suppliers with independent settings
 - **Async generation queue** - optional fire-and-forget path with status polling for high-throughput integrations

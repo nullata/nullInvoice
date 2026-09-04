@@ -48,7 +48,47 @@ If you're logged in via the web UI, your session is automatically used for API r
 - `response_type` supports `number` (default) or `pdf`.
   - `number`: Returns JSON with invoice metadata only
   - `pdf`: Returns PDF file directly with metadata in response headers
+- Optional `template_id` / `template_name` selects the template for this invoice - see [Per-Request Template Override](#per-request-template-override) below.
 - Status is always `issued` for API-generated invoices.
+
+### Per-Request Template Override
+
+The request body accepts two optional fields for picking the template used to render this invoice, without changing the supplier's stored default:
+
+| Field | Type | Notes |
+|---|---|---|
+| `template_id` | number | Template id. Takes precedence over `template_name` when both are set. |
+| `template_name` | string | Template name (case-insensitive). Ignored when `template_id` is set. |
+
+**Resolution order** (first match wins):
+
+1. `template_id` on the request
+2. `template_name` on the request
+3. The supplier's default template
+4. The global default template
+
+If neither field is set, the existing supplier-default → global-default fallback applies exactly as before. An unknown id or name returns **400 Bad Request** (`template with id X not found` / `template with name 'X' not found`); the request is not silently fallen back to a default.
+
+The override works identically on the async submit endpoint (`POST /api/v1/invoice-requests`) - the queue worker uses the same resolution when it renders the invoice.
+
+Camel-case (`templateId`, `templateName`) is accepted alongside the snake-case aliases shown above.
+
+### Example: Select Template by Id
+
+```bash
+curl -X POST http://localhost:8080/api/v1/invoices/generate \
+  -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "response_type": "number",
+  "supplier_id": 1,
+  "template_id": 3,
+  "client": { "id": 42 },
+  "items": [
+    { "description": "Consulting", "quantity": 1, "unit_price": 1000, "tax_rate": 0.2 }
+  ]
+}'
+```
 
 ### Example: Existing Client by ID
 
@@ -202,7 +242,7 @@ Both paths produce the same `Invoices` rows with the same numbering guarantees -
 
 **Authentication required** - Include Bearer token in `Authorization` header.
 
-**Request body:** identical to `POST /api/v1/invoices/generate`. The `response_type` field is ignored - async requests only persist the queue row; once the request reaches `COMPLETED`, fetch the invoice using the standard retrieval endpoints with the `invoiceNumber` returned in the status response.
+**Request body:** identical to `POST /api/v1/invoices/generate`, including the optional `template_id` / `template_name` override (see [Per-Request Template Override](#per-request-template-override)) - the queue worker resolves the same precedence when it renders. The `response_type` field is ignored - async requests only persist the queue row; once the request reaches `COMPLETED`, fetch the invoice using the standard retrieval endpoints with the `invoiceNumber` returned in the status response.
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/invoice-requests \
