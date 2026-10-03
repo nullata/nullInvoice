@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # The Maven project root is nullInvoice/, not the repo root.
+    defaults:
+      run:
+        working-directory: nullInvoice
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21' # matches the eclipse-temurin-21 images in Dockerfile
+          cache: maven
+          cache-dependency-path: nullInvoice/pom.xml
+
+      # Tests run against in-memory H2 (profile "test"), so no database is needed.
+      - name: Build and test
+        run: mvn -B verify
